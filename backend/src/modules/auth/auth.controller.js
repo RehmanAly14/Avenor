@@ -1,15 +1,3 @@
-// src/modules/auth/auth.controller.js
-// ============================================================
-// Auth controllers — HTTP layer only.
-//
-// Controllers must ONLY:
-//   1. Call the appropriate service function
-//   2. Send the response using sendSuccess / sendError
-//
-// Zero business logic lives here. This makes controllers
-// trivially readable and ensures logic is testable separately.
-// ============================================================
-
 import * as authService from "./auth.service.js";
 import { sendSuccess } from "../../utils/response.js";
 import { HTTP_STATUS } from "../../constants/http.js";

@@ -1,18 +1,3 @@
-// src/server.js
-// ============================================================
-// Server entry point.
-//
-// Responsibilities:
-//   1. Connect to the database
-//   2. Start the HTTP server
-//   3. Register graceful shutdown handlers
-//
-// Graceful shutdown is critical for production:
-//   - Stops accepting new requests
-//   - Allows in-flight requests to finish
-//   - Closes the DB connection pool cleanly
-// ============================================================
-
 import app from "./app.js";
 import { env } from "./config/env.js";
 import { connectDatabase, disconnectDatabase } from "./database/index.js";
@@ -35,10 +20,6 @@ async function bootstrap() {
 ╚══════════════════════════════════════════════╝
 `);
   });
-
-  // ── Graceful Shutdown ─────────────────────────────────────
-  // On SIGTERM (Docker stop, Kubernetes eviction, Heroku restart)
-  // or SIGINT (Ctrl+C) — shut down cleanly.
 
   const shutdown = async (signal) => {
     console.log(`\n⚡ ${signal} received. Shutting down gracefully...`);

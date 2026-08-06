@@ -1,17 +1,3 @@
-// src/app.js
-// ============================================================
-// Express application factory.
-//
-// app.js is responsible for:
-//   - Loading and configuring all middleware
-//   - Mounting the API routes
-//   - Registering the error handlers
-//
-// It does NOT start listening — that is server.js's job.
-// This separation makes it trivial to run the app in tests
-// without binding to a port.
-// ============================================================
-
 import express from "express";
 import helmet from "helmet";
 import cors from "cors";
@@ -27,9 +13,6 @@ const app = express();
 // ── Security Headers ───────────────────────────────────────
 // Helmet sets a collection of security-related HTTP headers.
 app.use(helmet());
-
-// ── CORS ───────────────────────────────────────────────────
-// Only allow requests from configured origins.
 app.use(
   cors({
     origin: (origin, callback) => {
@@ -85,13 +68,8 @@ app.get("/", (_req, res) => {
   });
 });
 
-// ── 404 Handler ────────────────────────────────────────────
-// Must come AFTER all routes — catches any unmatched request.
 app.use(notFoundMiddleware);
 
-// ── Global Error Handler ───────────────────────────────────
-// Must be the LAST middleware — Express identifies it by its
-// 4-parameter signature (err, req, res, next).
 app.use(errorMiddleware);
 
 export default app;
