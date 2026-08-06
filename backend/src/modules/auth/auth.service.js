@@ -1,15 +1,3 @@
-// src/modules/auth/auth.service.js
-// ============================================================
-// Auth business logic.
-//
-// Services own all business logic. Controllers call services;
-// services call the database (via Prisma).
-// This separation means:
-//  - Business logic is testable without HTTP
-//  - Controllers stay thin and readable
-//  - Logic can be reused across multiple transports (REST, WS, etc.)
-// ============================================================
-
 import prisma from "../../config/prisma.js";
 import { hashPassword, comparePassword } from "../../utils/hash.js";
 import { signToken } from "../../utils/jwt.js";
