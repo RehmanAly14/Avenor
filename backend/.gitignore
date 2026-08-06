@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Environment variables — NEVER commit real .env files
+.env
+.env.local
+.env.production
+
+# Prisma generated client (generated during install/build)
+# node_modules/.prisma is gitignored via node_modules above
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/settings.json
+.idea/
+*.swp
+
+# Build output (if added in future)
+dist/
+build/

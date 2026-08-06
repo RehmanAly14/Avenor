@@ -1,0 +1,92 @@
+// prisma/schema.prisma
+// ============================================================
+// Avenor — Prisma Data Model
+//
+// Design principles:
+//   - UUIDs as primary keys (no sequential integer IDs exposed)
+//   - createdAt / updatedAt on every model
+//   - Explicit @map / @@map for snake_case DB columns (JS models stay camelCase)
+//   - Cascade deletes defined explicitly — nothing left orphaned
+//   - Every unique constraint is intentional and documented
+//
+// Future models to add here:
+//   - WorkspaceMember (many-to-many with roles)
+//   - Agent
+//   - AgentSession
+//   - DataSource
+//   - Embedding (pgvector)
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ──────────────────────────────────────────────────────────
+// User
+// The core identity record. All other models reference User.
+// ──────────────────────────────────────────────────────────
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  avatar    String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt     @map("updated_at")
+
+  // Relations
+  projects   Project[]
+  workspaces Workspace[]
+
+  @@map("users")
+}
+
+// ──────────────────────────────────────────────────────────
+// Project
+// A named container for AI agent work within a workspace.
+// slug is the URL-safe identifier used in API routes.
+// ──────────────────────────────────────────────────────────
+model Project {
+  id          String  @id @default(uuid())
+  name        String
+  slug        String  @unique
+  description String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt     @map("updated_at")
+
+  // Ownership
+  ownerId String @map("owner_id")
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId])
+  @@map("projects")
+}
+
+// ──────────────────────────────────────────────────────────
+// Workspace
+// The top-level organisational unit.
+// In future: contains members, projects, and agent configs.
+// ──────────────────────────────────────────────────────────
+model Workspace {
+  id          String  @id @default(uuid())
+  name        String
+  slug        String  @unique
+  description String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt     @map("updated_at")
+
+  // Ownership
+  ownerId String @map("owner_id")
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId])
+  @@map("workspaces")
+}
