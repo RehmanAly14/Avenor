@@ -1,0 +1,9 @@
+import * as service from "./datasource.service.js";
+import { asyncHandler } from "../../utils/asyncHandler.js";
+import { sendSuccess, buildPaginationMeta } from "../../utils/response.js";
+import { HTTP_STATUS } from "../../constants/http.js";
+export const createDataSource = asyncHandler(async (req, res) => sendSuccess(res, { statusCode: HTTP_STATUS.CREATED, message: "Data source created successfully.", data: { dataSource: await service.createDataSource(req.user.id, req.body) } }));
+export const listDataSources = asyncHandler(async (req, res) => { const result = await service.listDataSources(req.user.id, req.query); sendSuccess(res, { message: "Data sources retrieved successfully.", data: { dataSources: result.items }, meta: buildPaginationMeta({ total: result.total, page: result.pagination.page, limit: result.pagination.limit }) }); });
+export const getDataSource = asyncHandler(async (req, res) => sendSuccess(res, { message: "Data source retrieved successfully.", data: { dataSource: await service.getDataSource(req.params.id, req.user.id) } }));
+export const updateDataSource = asyncHandler(async (req, res) => sendSuccess(res, { message: "Data source updated successfully.", data: { dataSource: await service.updateDataSource(req.params.id, req.user.id, req.body) } }));
+export const deleteDataSource = asyncHandler(async (req, res) => { await service.deleteDataSource(req.params.id, req.user.id); sendSuccess(res, { message: "Data source deleted successfully." }); });

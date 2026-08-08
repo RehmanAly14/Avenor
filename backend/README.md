@@ -331,6 +331,34 @@ Authorization: Bearer <token>
 | `PATCH` | `/workspaces/:slug` | Private | Update a workspace |
 | `DELETE` | `/workspaces/:slug` | Private | Delete a workspace |
 
+### Phase 3 data foundation
+
+All endpoints below are private and use the same response envelope as the rest of the API.
+
+| Module | Endpoints |
+|---|---|
+| Data sources | `POST/GET /datasources`, `GET/PATCH/DELETE /datasources/:id` |
+| Metadata | `POST/GET /metadata/assets`, `GET/PATCH/DELETE /metadata/assets/:id`; CRUD for `/metadata/owners`, `/metadata/tags`, and `/metadata/domains` |
+| Catalog | `GET /catalog/assets`, `GET /catalog/search`, `GET /catalog/:id` |
+| Documents | `POST /documents/upload`, `GET /documents`, `GET/DELETE /documents/:id` |
+
+`POST /documents/upload` consumes `multipart/form-data` with a `file` field plus `projectId` and `workspaceId` text fields. Files are stored beneath `storage/documents`, which is intentionally excluded from source control.
+
+Catalog and metadata list endpoints accept `page` and `limit`. Catalog additionally supports `q`, `tag`, `owner`, `sortBy` (`name`, `createdAt`, `updatedAt`) and `sortOrder`.
+
+### Data model additions
+
+Phase 3 introduces `DataSource`, `MetadataAsset`, `MetadataSchema`, `MetadataColumn`, `MetadataOwner`, `MetadataTag`, `MetadataDomain`, and `Document`. Assets retain source, ownership, tagging, domain, schema, and column relationships. `src/datahub/` contains interface-only preparation for a future adapter; it does not connect to DataHub.
+
+```
+Project + Workspace
+  ├─ DataSource ── MetadataAsset ── MetadataSchema ── MetadataColumn
+  ├─ MetadataOwner ──< asset owners
+  ├─ MetadataTag ────< asset tags
+  ├─ MetadataDomain ─< assets
+  └─ Document
+```
+
 ---
 
 ## Environment Variables

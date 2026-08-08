@@ -1,0 +1,13 @@
+import * as service from "./metadata.service.js";
+import { asyncHandler } from "../../utils/asyncHandler.js";
+import { sendSuccess, buildPaginationMeta } from "../../utils/response.js";
+import { HTTP_STATUS } from "../../constants/http.js";
+export const createAsset = asyncHandler(async (req,res) => sendSuccess(res,{statusCode:HTTP_STATUS.CREATED,message:"Metadata asset created successfully.",data:{asset:await service.createAsset(req.user.id,req.body)}}));
+export const listAssets = asyncHandler(async (req,res) => { const result=await service.listAssets(req.user.id,req.query); sendSuccess(res,{message:"Metadata assets retrieved successfully.",data:{assets:result.items},meta:buildPaginationMeta({total:result.total,page:result.pagination.page,limit:result.pagination.limit})}); });
+export const getAsset = asyncHandler(async (req,res)=>sendSuccess(res,{message:"Metadata asset retrieved successfully.",data:{asset:await service.getAsset(req.params.id,req.user.id)}}));
+export const updateAsset = asyncHandler(async (req,res)=>sendSuccess(res,{message:"Metadata asset updated successfully.",data:{asset:await service.updateAsset(req.params.id,req.user.id,req.body)}}));
+export const deleteAsset = asyncHandler(async (req,res)=>{await service.deleteAsset(req.params.id,req.user.id);sendSuccess(res,{message:"Metadata asset deleted successfully."});});
+export const createEntity=(kind)=>asyncHandler(async(req,res)=>sendSuccess(res,{statusCode:HTTP_STATUS.CREATED,message:`Metadata ${kind.slice(0,-1)} created successfully.`,data:{[kind.slice(0,-1)]:await service.createEntity(kind,req.user.id,req.body)}}));
+export const listEntities=(kind)=>asyncHandler(async(req,res)=>sendSuccess(res,{message:`Metadata ${kind} retrieved successfully.`,data:{[kind]:await service.listEntities(kind,req.user.id,req.query.workspaceId)}}));
+export const updateEntity=(kind)=>asyncHandler(async(req,res)=>sendSuccess(res,{message:`Metadata ${kind.slice(0,-1)} updated successfully.`,data:{[kind.slice(0,-1)]:await service.updateEntity(kind,req.params.id,req.user.id,req.body)}}));
+export const deleteEntity=(kind)=>asyncHandler(async(req,res)=>{await service.deleteEntity(kind,req.params.id,req.user.id);sendSuccess(res,{message:`Metadata ${kind.slice(0,-1)} deleted successfully.`});});

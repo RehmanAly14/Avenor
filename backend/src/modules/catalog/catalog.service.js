@@ -1,0 +1,10 @@
+import prisma from "../../config/prisma.js";
+import { AppError } from "../../utils/AppError.js";
+import { HTTP_STATUS } from "../../constants/http.js";
+import { containsInsensitive } from "../../utils/search.js";
+import { paginationParams } from "../../utils/pagination.js";
+import { transaction } from "../../utils/transaction.js";
+const include = { dataSource: { select: { id:true,name:true,provider:true } }, domain:true, owners:true, tags:true, schemas:{include:{columns:{orderBy:{ordinal:"asc"}}}} };
+async function scope(userId, projectId, workspaceId) { const [project,workspace] = await transaction([prisma.project.findFirst({where:{id:projectId,ownerId:userId}}),prisma.workspace.findFirst({where:{id:workspaceId,ownerId:userId}})]); if(!project||!workspace) throw new AppError("Project or workspace was not found or is not accessible.",HTTP_STATUS.FORBIDDEN); }
+export async function listCatalogAssets(userId, filters) { const { page,limit,projectId,workspaceId,q,tag,owner,sortBy,sortOrder }=filters; if(projectId||workspaceId){if(!projectId||!workspaceId) throw new AppError("projectId and workspaceId must be supplied together.",HTTP_STATUS.UNPROCESSABLE_ENTITY);await scope(userId,projectId,workspaceId);} const where={...(projectId?{projectId,workspaceId}:{project:{ownerId:userId}}),...(q&&{OR:[{name:containsInsensitive(q)},{description:containsInsensitive(q)},{qualifiedName:containsInsensitive(q)}]}),...(tag&&{tags:{some:{name:containsInsensitive(tag)}}}),...(owner&&{owners:{some:{OR:[{name:containsInsensitive(owner)},{email:containsInsensitive(owner)}]}}})};const pg=paginationParams({page,limit});const [items,total]=await transaction([prisma.metadataAsset.findMany({where,include,orderBy:{[sortBy]:sortOrder},skip:pg.skip,take:pg.take}),prisma.metadataAsset.count({where})]);return{items,total,pagination:pg}; }
+export async function getCatalogAsset(userId,id){const asset=await prisma.metadataAsset.findFirst({where:{id,project:{ownerId:userId}},include});if(!asset)throw new AppError("Catalog asset not found.",HTTP_STATUS.NOT_FOUND);return asset;}

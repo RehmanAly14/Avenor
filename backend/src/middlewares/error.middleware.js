@@ -64,6 +64,14 @@ function handlePrismaError(err) {
 
 // eslint-disable-next-line no-unused-vars
 export function errorMiddleware(err, req, res, _next) {
+  // Express JSON parser errors are operational client errors, not server faults.
+  if (err instanceof SyntaxError && err.status === HTTP_STATUS.BAD_REQUEST && "body" in err) {
+    return sendError(res, {
+      statusCode: HTTP_STATUS.BAD_REQUEST,
+      message: "Malformed JSON request body.",
+    });
+  }
+
   // ── Zod validation errors ──────────────────────────────────
   if (err instanceof ZodError) {
     return sendError(res, {

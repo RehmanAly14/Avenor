@@ -35,7 +35,9 @@ FROM node:20-alpine AS production
 
 # Security: run as non-root
 RUN addgroup --system --gid 1001 avenor && \
-    adduser --system --uid 1001 avenor
+    adduser --system --uid 1001 avenor && \
+    mkdir -p /app/storage/documents && \
+    chown -R avenor:avenor /app
 
 WORKDIR /app
 

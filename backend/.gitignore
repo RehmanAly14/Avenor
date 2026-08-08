@@ -28,3 +28,6 @@ Thumbs.db
 # Build output (if added in future)
 dist/
 build/
+
+# Local document storage
+storage/

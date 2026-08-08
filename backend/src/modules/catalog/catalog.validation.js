@@ -1,0 +1,3 @@
+import { z } from "zod";
+export const catalogQuerySchema = z.object({ projectId: z.string().uuid().optional(), workspaceId: z.string().uuid().optional(), q: z.string().trim().min(1).max(255).optional(), tag: z.string().trim().min(1).max(255).optional(), owner: z.string().trim().min(1).max(255).optional(), sortBy: z.enum(["name", "createdAt", "updatedAt"]).default("updatedAt"), sortOrder: z.enum(["asc", "desc"]).default("desc"), page: z.coerce.number().int().min(1).default(1), limit: z.coerce.number().int().min(1).max(100).default(20) });
+export const catalogIdSchema = z.object({ id: z.string().uuid() });

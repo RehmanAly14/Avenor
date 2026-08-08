@@ -30,6 +30,15 @@ function optionalEnv(key, defaultValue) {
   return process.env[key] ?? defaultValue;
 }
 
+const dataEncryptionKey = optionalEnv("DATA_ENCRYPTION_KEY", "");
+
+if (process.env.NODE_ENV === "production" && !dataEncryptionKey) {
+  throw new Error(
+    "[Config] Missing required environment variable: DATA_ENCRYPTION_KEY\n" +
+      "  → A dedicated encryption key is required in production."
+  );
+}
+
 export const env = Object.freeze({
   // ---- Server ----
   NODE_ENV: optionalEnv("NODE_ENV", "development"),
@@ -45,6 +54,9 @@ export const env = Object.freeze({
   JWT_SECRET: requireEnv("JWT_SECRET"),
   JWT_EXPIRES_IN: optionalEnv("JWT_EXPIRES_IN", "7d"),
   JWT_REFRESH_EXPIRES_IN: optionalEnv("JWT_REFRESH_EXPIRES_IN", "30d"),
+  // A dedicated key is recommended for datasource credentials. JWT_SECRET is
+  // retained as a development fallback so existing deployments remain runnable.
+  DATA_ENCRYPTION_KEY: dataEncryptionKey,
 
   // ---- CORS ----
   CORS_ORIGINS: optionalEnv("CORS_ORIGINS", "http://localhost:3000")

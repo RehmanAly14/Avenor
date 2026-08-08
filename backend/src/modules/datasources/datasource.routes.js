@@ -1,0 +1,9 @@
+import { Router } from "express";
+import { authenticate } from "../../middlewares/auth.middleware.js";
+import { validate } from "../../middlewares/validate.middleware.js";
+import * as controller from "./datasource.controller.js";
+import { createDataSourceSchema, updateDataSourceSchema, listDataSourcesQuerySchema, dataSourceIdSchema } from "./datasource.validation.js";
+const router = Router(); router.use(authenticate);
+router.route("/").post(validate(createDataSourceSchema), controller.createDataSource).get(validate(listDataSourcesQuerySchema, "query"), controller.listDataSources);
+router.route("/:id").get(validate(dataSourceIdSchema, "params"), controller.getDataSource).patch(validate(dataSourceIdSchema, "params"), validate(updateDataSourceSchema), controller.updateDataSource).delete(validate(dataSourceIdSchema, "params"), controller.deleteDataSource);
+export default router;

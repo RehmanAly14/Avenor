@@ -21,6 +21,10 @@ import authRoutes from "../modules/auth/auth.routes.js";
 import userRoutes from "../modules/users/user.routes.js";
 import projectRoutes from "../modules/projects/project.routes.js";
 import workspaceRoutes from "../modules/workspaces/workspace.routes.js";
+import dataSourceRoutes from "../modules/datasources/datasource.routes.js";
+import metadataRoutes from "../modules/metadata/metadata.routes.js";
+import catalogRoutes from "../modules/catalog/catalog.routes.js";
+import documentRoutes from "../modules/documents/document.routes.js";
 
 const router = Router();
 
@@ -57,6 +61,10 @@ router.use("/auth", authRoutes);
 router.use("/users", userRoutes);
 router.use("/projects", projectRoutes);
 router.use("/workspaces", workspaceRoutes);
+router.use("/datasources", dataSourceRoutes);
+router.use("/metadata", metadataRoutes);
+router.use("/catalog", catalogRoutes);
+router.use("/documents", documentRoutes);
 
 // Future modules are added here:
 // router.use("/agents", agentRoutes);

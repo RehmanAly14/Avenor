@@ -65,6 +65,10 @@ model Project {
   ownerId String @map("owner_id")
   owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
+  dataSources    DataSource[]
+  metadataAssets MetadataAsset[]
+  documents      Document[]
+
   @@index([ownerId])
   @@map("projects")
 }
@@ -87,6 +91,185 @@ model Workspace {
   ownerId String @map("owner_id")
   owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
+  dataSources      DataSource[]
+  metadataAssets   MetadataAsset[]
+  metadataOwners   MetadataOwner[]
+  metadataTags     MetadataTag[]
+  metadataDomains  MetadataDomain[]
+  documents        Document[]
+
   @@index([ownerId])
   @@map("workspaces")
+}
+
+enum DataSourceProvider {
+  POSTGRESQL
+  MYSQL
+}
+
+enum DataSourceStatus {
+  ACTIVE
+  INACTIVE
+  ERROR
+}
+
+enum DocumentStatus {
+  UPLOADED
+  PENDING
+  FAILED
+}
+
+model DataSource {
+  id                String             @id @default(uuid())
+  projectId         String             @map("project_id")
+  workspaceId       String             @map("workspace_id")
+  name              String
+  provider          DataSourceProvider
+  host              String
+  port              Int
+  database          String
+  username          String
+  encryptedPassword String             @map("encrypted_password")
+  status            DataSourceStatus   @default(ACTIVE)
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @updatedAt @map("updated_at")
+
+  project Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  assets MetadataAsset[]
+
+  @@unique([workspaceId, name])
+  @@index([projectId])
+  @@index([workspaceId])
+  @@map("data_sources")
+}
+
+model MetadataAsset {
+  id           String   @id @default(uuid())
+  projectId    String   @map("project_id")
+  workspaceId  String   @map("workspace_id")
+  dataSourceId String?  @map("data_source_id")
+  name         String
+  description  String?
+  qualifiedName String? @unique @map("qualified_name")
+  assetType    String   @default("TABLE") @map("asset_type")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  project    Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  workspace  Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  dataSource DataSource? @relation(fields: [dataSourceId], references: [id], onDelete: SetNull)
+  schemas    MetadataSchema[]
+  owners     MetadataOwner[]
+  tags       MetadataTag[]
+  domainId   String? @map("domain_id")
+  domain     MetadataDomain? @relation(fields: [domainId], references: [id], onDelete: SetNull)
+
+  @@index([projectId])
+  @@index([workspaceId])
+  @@index([dataSourceId])
+  @@index([domainId])
+  @@index([name])
+  @@map("metadata_assets")
+}
+
+model MetadataSchema {
+  id        String   @id @default(uuid())
+  assetId   String   @map("asset_id")
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  asset   MetadataAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  columns MetadataColumn[]
+
+  @@unique([assetId, name])
+  @@index([assetId])
+  @@map("metadata_schemas")
+}
+
+model MetadataColumn {
+  id          String   @id @default(uuid())
+  schemaId    String   @map("schema_id")
+  name        String
+  dataType    String   @map("data_type")
+  description String?
+  isNullable  Boolean  @default(true) @map("is_nullable")
+  ordinal     Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  schema MetadataSchema @relation(fields: [schemaId], references: [id], onDelete: Cascade)
+
+  @@unique([schemaId, name])
+  @@index([schemaId])
+  @@map("metadata_columns")
+}
+
+model MetadataOwner {
+  id          String   @id @default(uuid())
+  workspaceId String   @map("workspace_id")
+  name        String
+  email       String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  workspace Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  assets    MetadataAsset[]
+
+  @@unique([workspaceId, name])
+  @@index([workspaceId])
+  @@map("metadata_owners")
+}
+
+model MetadataTag {
+  id          String   @id @default(uuid())
+  workspaceId String   @map("workspace_id")
+  name        String
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  workspace Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  assets    MetadataAsset[]
+
+  @@unique([workspaceId, name])
+  @@index([workspaceId])
+  @@map("metadata_tags")
+}
+
+model MetadataDomain {
+  id          String   @id @default(uuid())
+  workspaceId String   @map("workspace_id")
+  name        String
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  workspace Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  assets    MetadataAsset[]
+
+  @@unique([workspaceId, name])
+  @@index([workspaceId])
+  @@map("metadata_domains")
+}
+
+model Document {
+  id          String         @id @default(uuid())
+  projectId   String         @map("project_id")
+  workspaceId String         @map("workspace_id")
+  filename    String
+  fileSize    Int            @map("file_size")
+  mimeType    String         @map("mime_type")
+  storagePath String         @unique @map("storage_path")
+  status      DocumentStatus @default(UPLOADED)
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([workspaceId])
+  @@map("documents")
 }

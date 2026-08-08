@@ -1,0 +1,10 @@
+import { z } from "zod";
+const uuid = z.string().uuid();
+export const idParamSchema = z.object({ id: uuid });
+const column = z.object({ name: z.string().min(1).max(255), dataType: z.string().min(1).max(100), description: z.string().max(2000).optional().nullable(), isNullable: z.boolean().optional(), ordinal: z.coerce.number().int().min(0).optional() });
+const schema = z.object({ name: z.string().min(1).max(255), columns: z.array(column).max(1000).optional() });
+export const createAssetSchema = z.object({ projectId: uuid, workspaceId: uuid, dataSourceId: uuid.optional().nullable(), name: z.string().min(1).max(255), description: z.string().max(5000).optional().nullable(), qualifiedName: z.string().min(1).max(500).optional().nullable(), assetType: z.string().min(1).max(100).optional(), domainId: uuid.optional().nullable(), ownerIds: z.array(uuid).max(100).optional(), tagIds: z.array(uuid).max(100).optional(), schemas: z.array(schema).max(100).optional() });
+export const updateAssetSchema = createAssetSchema.omit({ projectId: true, workspaceId: true }).partial().refine((value) => Object.keys(value).length > 0, "At least one field is required.");
+export const assetQuerySchema = z.object({ projectId: uuid.optional(), workspaceId: uuid.optional(), q: z.string().trim().min(1).max(255).optional(), page: z.coerce.number().int().min(1).default(1), limit: z.coerce.number().int().min(1).max(100).default(20) });
+export const createEntitySchema = z.object({ workspaceId: uuid, name: z.string().min(1).max(255), description: z.string().max(2000).optional().nullable(), email: z.string().email().optional().nullable() });
+export const updateEntitySchema = z.object({ name: z.string().min(1).max(255).optional(), description: z.string().max(2000).optional().nullable(), email: z.string().email().optional().nullable() }).refine((value) => Object.keys(value).length > 0, "At least one field is required.");
