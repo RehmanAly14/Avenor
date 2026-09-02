@@ -1,39 +1,40 @@
-# src/ai/README.md
+# AI Module
 
-# AI Module (Reserved)
+This directory contains the AI agent infrastructure for the Avenor Autonomous DataOps Platform.
 
-This directory is reserved for the Avenor AI subsystem.
-
-## Planned Structure
+## Architecture
 
 ```
 ai/
-├── agents/           # LangGraph agent definitions
-│   ├── base.agent.js
-│   └── research.agent.js
-│
-├── rag/              # Retrieval-Augmented Generation
-│   ├── embeddings.js
-│   ├── vectorStore.js
-│   └── retriever.js
-│
-├── mcp/              # Model Context Protocol clients
-│   └── mcp.client.js
-│
-├── tools/            # LangChain / LangGraph tools
-│   └── datahub.tool.js
-│
-├── memory/           # Agent memory / state management
-│   └── memory.store.js
-│
+├── tools/            # Provider-agnostic AI tools (metadata search, lineage, etc.)
+├── agents/
+│   ├── planner/      # Plans investigation strategy
+│   ├── investigator/ # Runs deterministic metadata investigation
+│   ├── impact/       # Performs impact analysis
+│   ├── fixer/        # Generates fix recommendations
+│   └── documentation/ # Generates documentation
+├── orchestrator/     # Coordinates multi-agent workflows
 └── index.js          # AI module entry point
 ```
 
-## Integration Notes
+## Tool Layer
 
-- AI agents will be invoked via REST endpoints mounted at `/api/v1/agents`
-- Agent sessions will be persisted in PostgreSQL via a future `AgentSession` Prisma model
-- Vector search will connect to pgvector or a dedicated vector database
-- DataHub integration will be added as an MCP tool
+The `tools/` directory contains provider-agnostic functions that wrap the Metadata Intelligence Engine's services. Each tool accepts plain objects and returns structured JSON — no OpenAI/LangChain coupling.
 
-**Do not add any code to this directory** until the backend foundation is stable.
+Tools available:
+- `metadataSearchTool` — search across assets, columns, owners, tags, domains
+- `getAssetTool` — fetch a single metadata asset
+- `getUpstreamLineageTool` — traverse upstream dependencies
+- `getDownstreamLineageTool` — traverse downstream dependencies
+- `impactAnalysisTool` — recursive impact analysis with depth tracking
+- `schemaChangeTool` — compare two schema snapshots
+- `getOwnerTool` — fetch owner and owned assets
+- `getIncidentTool` — fetch incident and affected assets
+
+## Agent Layer
+
+Agents are orchestrated via the `orchestrator/`. The first concrete agent is the **Investigation Agent**, which performs deterministic metadata investigation using the available tools.
+
+AI framework integration (OpenAI, Anthropic, LangGraph) will be added when agents are implemented. This directory is reserved for that future work.
+
+**Do not add production code here until the Metadata Intelligence Engine is stable.**

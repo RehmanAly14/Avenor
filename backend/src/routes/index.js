@@ -66,8 +66,10 @@ router.use("/metadata", metadataRoutes);
 router.use("/catalog", catalogRoutes);
 router.use("/documents", documentRoutes);
 
-// Future modules are added here:
+// Future modules:
 // router.use("/agents", agentRoutes);
-// router.use("/datahub", datahubRoutes);
+// router.use("/metadata/lineage", lineageRoutes);
+// router.use("/metadata/intelligence", metadataIntelligenceRoutes);
+// router.use("/investigations", investigationRoutes);
 
 export default router;

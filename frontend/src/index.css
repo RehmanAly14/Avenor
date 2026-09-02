@@ -1,0 +1,265 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #004ac6;
+  --color-primary-container: #2563eb;
+  --color-secondary: #0058be;
+  --color-secondary-container: #2170e4;
+  --color-tertiary: #006329;
+  --color-tertiary-container: #007f36;
+  --color-surface: #f9f9ff;
+  --color-surface-dim: #d3daef;
+  --color-surface-bright: #f9f9ff;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f1f3ff;
+  --color-surface-container: #e9edff;
+  --color-surface-container-high: #e1e8fd;
+  --color-surface-container-highest: #dce2f7;
+  --color-background: #f9f9ff;
+  --color-on-surface: #141b2b;
+  --color-on-surface-variant: #434655;
+  --color-inverse-surface: #293040;
+  --color-inverse-on-surface: #edf0ff;
+  --color-outline: #737686;
+  --color-outline-variant: #c3c6d7;
+  --color-error: #ba1a1a;
+  --color-error-container: #ffdad6;
+  --color-on-error: #ffffff;
+  --color-on-error-container: #93000a;
+  --color-primary-fixed: #dbe1ff;
+  --color-primary-fixed-dim: #b4c5ff;
+  --color-on-primary-fixed: #00174b;
+  --color-on-primary-fixed-variant: #003ea8;
+  --color-secondary-fixed: #d8e2ff;
+  --color-secondary-fixed-dim: #adc6ff;
+  --color-on-secondary-fixed: #001a42;
+  --color-on-secondary-fixed-variant: #004395;
+  --color-tertiary-fixed: #7ffc97;
+  --color-tertiary-fixed-dim: #62df7d;
+  --color-on-tertiary-fixed: #002109;
+  --color-on-tertiary-fixed-variant: #005320;
+  --color-surface-tint: #0053db;
+  --color-inverse-primary: #b4c5ff;
+  --color-on-primary: #ffffff;
+  --color-on-primary-container: #eeefff;
+  --color-on-secondary: #ffffff;
+  --color-on-secondary-container: #fefcff;
+  --color-on-tertiary: #ffffff;
+  --color-on-tertiary-container: #c7ffca;
+
+  --font-sans: 'Inter', sans-serif;
+
+  /* Custom Font Styles mapped from designMd */
+  --font-display-lg: 'Inter', sans-serif;
+  --font-headline-lg: 'Inter', sans-serif;
+  --font-headline-md: 'Inter', sans-serif;
+  --font-body-lg: 'Inter', sans-serif;
+  --font-body-md: 'Inter', sans-serif;
+  --font-body-sm: 'Inter', sans-serif;
+  --font-label-md: 'Inter', sans-serif;
+  --font-label-caps: 'Inter', sans-serif;
+
+  /* Spacing Scale */
+  --spacing-margin-desktop: 40px;
+  --spacing-container-max: 1440px;
+  --spacing-stack-xl: 48px;
+  --spacing-stack-lg: 24px;
+  --spacing-stack-md: 16px;
+  --spacing-stack-sm: 8px;
+  --spacing-stack-xs: 4px;
+  --spacing-gutter: 24px;
+  --spacing-margin-mobile: 16px;
+
+  /* Border radius */
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+}
+
+/* Global resets & Typography */
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--color-surface);
+  color: var(--color-on-surface);
+  min-height: 100vh;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  vertical-align: middle;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-surface-container);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-surface-container-highest);
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Glass panel components */
+.glass-card, .glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(232, 237, 242, 1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02), 0 10px 20px rgba(0, 0, 0, 0.04);
+}
+
+/* Shimmer and glows */
+.shimmer-bar {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer-bar::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(37, 99, 235, 0.1), transparent);
+  animation: shimmer-anim 2s infinite;
+}
+
+.shimmer {
+  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%);
+  background-size: 200% 100%;
+  animation: shimmer-anim 2s infinite;
+}
+
+@keyframes shimmer-anim {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.ai-glow {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: rgba(37, 99, 235, 0.1);
+  filter: blur(64px);
+  z-index: -1;
+  pointer-events: none;
+}
+
+.soft-glow {
+  filter: blur(80px);
+  opacity: 0.15;
+  background: #2563EB;
+}
+
+.ambient-glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  pointer-events: none;
+  opacity: 0.15;
+  z-index: 0;
+}
+
+.pulse-glow {
+  animation: glow-pulse 3s infinite ease-in-out;
+}
+.glow-pulse {
+  animation: glow-pulse 3s infinite ease-in-out;
+}
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 5px rgba(37, 99, 235, 0.1); }
+  50% { box-shadow: 0 0 20px rgba(37, 99, 235, 0.3); }
+}
+
+/* Svg Line Animations */
+.flow-line {
+  stroke-dasharray: 8;
+  animation: flow-anim 20s linear infinite;
+}
+@keyframes flow-anim {
+  to { stroke-dashoffset: -100; }
+}
+
+/* Pipeline styles */
+.pipeline-line {
+  background: linear-gradient(to bottom, #2563eb 0%, #e9edff 100%);
+}
+
+/* Drawer transition settings */
+.drawer-transition {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* SQL editor syntax highlights */
+.syntax-keyword {
+  color: #0053db;
+  font-weight: 600;
+}
+.syntax-function {
+  color: #7c3aed;
+}
+.syntax-operator {
+  color: #0f172a;
+}
+.syntax-comment {
+  color: #94a3b8;
+  font-style: italic;
+}
+.syntax-string {
+  color: #15803d;
+}
+
+.diff-added {
+  background-color: rgba(22, 163, 74, 0.08);
+  border-left: 2px solid #16a34a;
+  display: block;
+}
+
+.diff-removed {
+  background-color: rgba(220, 38, 38, 0.08);
+  border-left: 2px solid #dc2626;
+  text-decoration: line-through;
+  display: block;
+}
+
+/* Risk gauge styling */
+.risk-gauge-path {
+  stroke-dasharray: 251.32;
+  stroke-dashoffset: 251.32;
+  transition: stroke-dashoffset 1s ease-out;
+}
+
+/* Sidebar mask and navigation helpers */
+.sidebar-mask {
+  mask-image: linear-gradient(to bottom, transparent, white 20px, white 90%, transparent);
+}
+
+/* Expandable rows */
+.investigation-row {
+  max-height: 80px;
+  transition: max-height 0.3s ease-in-out;
+}
+.investigation-row.row-expanded {
+  max-height: 1000px;
+}
+.row-expanded .arrow-icon {
+  transform: rotate(180deg);
+}
+.row-expanded .expanded-content {
+  display: block !important;
+}

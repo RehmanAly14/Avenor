@@ -164,6 +164,8 @@ model MetadataAsset {
   tags       MetadataTag[]
   domainId   String? @map("domain_id")
   domain     MetadataDomain? @relation(fields: [domainId], references: [id], onDelete: SetNull)
+  sourceLineages  MetadataLineage[] @relation("LineageSource")
+  targetLineages  MetadataLineage[] @relation("LineageTarget")
 
   @@index([projectId])
   @@index([workspaceId])
@@ -272,4 +274,93 @@ model Document {
   @@index([projectId])
   @@index([workspaceId])
   @@map("documents")
+}
+
+// ──────────────────────────────────────────────────────────
+// MetadataLineage
+// Tracks data lineage relationships between metadata assets.
+// Used for impact analysis, investigation, and future AI reasoning.
+//
+// Lineages are always within the context of a project + workspace.
+// Both sourceAssetId and targetAssetId reference the same workspace's
+// MetadataAsset records, enforced by the FK constraints.
+// ──────────────────────────────────────────────────────────
+enum MetadataLineageType {
+  UPSTREAM
+  DOWNSTREAM
+  DERIVED_FROM
+  READS_FROM
+  WRITES_TO
+}
+
+model MetadataLineage {
+  id               String              @id @default(uuid())
+  projectId        String              @map("project_id")
+  workspaceId      String              @map("workspace_id")
+  sourceAssetId    String              @map("source_asset_id")
+  targetAssetId    String              @map("target_asset_id")
+  relationshipType MetadataLineageType
+  confidence       Float               @default(1.0)
+  metadata         Json?
+  createdAt        DateTime            @default(now()) @map("created_at")
+  updatedAt        DateTime            @updatedAt @map("updated_at")
+
+  project    Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  workspace  Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  sourceAsset MetadataAsset @relation("LineageSource", fields: [sourceAssetId], references: [id], onDelete: Cascade)
+  targetAsset MetadataAsset @relation("LineageTarget", fields: [targetAssetId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceAssetId, targetAssetId, relationshipType])
+  @@index([projectId])
+  @@index([workspaceId])
+  @@index([sourceAssetId])
+  @@index([targetAssetId])
+  @@index([relationshipType])
+  @@map("metadata_lineages")
+}
+
+// ──────────────────────────────────────────────────────────
+// DataIncident
+// Tracks data quality incidents, schema issues, and downstream
+// impacts for the future AI DataOps agent.
+//
+// Affected assets are stored as JSON initially, allowing flexible
+// enrichment as the platform evolves.
+// ──────────────────────────────────────────────────────────
+enum DataIncidentStatus {
+  OPEN
+  INVESTIGATING
+  RESOLVED
+  FAILED
+}
+
+enum DataIncidentSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model DataIncident {
+  id              String               @id @default(uuid())
+  projectId       String               @map("project_id")
+  workspaceId     String               @map("workspace_id")
+  title           String
+  description     String?
+  status          DataIncidentStatus   @default(OPEN)
+  severity        DataIncidentSeverity @default(MEDIUM)
+  rootCause       String?
+  affectedAssets  Json?
+  resolution      String?
+  createdAt       DateTime             @default(now()) @map("created_at")
+  updatedAt       DateTime             @updatedAt @map("updated_at")
+
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([workspaceId])
+  @@index([status])
+  @@index([severity])
+  @@map("data_incidents")
 }

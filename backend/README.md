@@ -348,7 +348,7 @@ Catalog and metadata list endpoints accept `page` and `limit`. Catalog additiona
 
 ### Data model additions
 
-Phase 3 introduces `DataSource`, `MetadataAsset`, `MetadataSchema`, `MetadataColumn`, `MetadataOwner`, `MetadataTag`, `MetadataDomain`, and `Document`. Assets retain source, ownership, tagging, domain, schema, and column relationships. `src/datahub/` contains interface-only preparation for a future adapter; it does not connect to DataHub.
+Phase 3 introduces `DataSource`, `MetadataAsset`, `MetadataSchema`, `MetadataColumn`, `MetadataOwner`, `MetadataTag`, `MetadataDomain`, and `Document`. Assets retain source, ownership, tagging, domain, schema, and column relationships.
 
 ```
 Project + Workspace
@@ -376,8 +376,6 @@ Project + Workspace
 | `BCRYPT_ROUNDS` | No | `12` | bcrypt work factor |
 
 ---
-
-## Docker
 
 ### Start with Docker Compose (includes PostgreSQL)
 

@@ -1,0 +1,319 @@
+=== SCREEN: Avenor_Asset_Intelligence.html (Title: Avenor OS | Asset Intelligence) ===
+HEADINGS:
+  - customer_orders
+  - AI Schema Insight
+  - fork_leftUpstream Sources
+  - account_treeDownstream Impact
+  - Usage Analytics
+NAV LINKS:
+  - dashboardMission Control (#)
+  - search_checkInvestigations (#)
+  - hubKnowledge Graph (#)
+  - inventory_2Assets (#)
+  - insightsImpact Studio (#)
+  - terminalCode Studio (#)
+  - workWorkspace (#)
+  - settingsSettings (#)
+  - helpSupport (#)
+BUTTONS:
+  - addNew Investigation
+  - notifications
+  - View alerts (3)
+  - Overview
+  - Schema
+  - Lineage
+  - Usage
+  - Quality4
+  - more_horiz
+  - more_horiz
+INPUTS:
+  - text: Search assets, tables, lineage...
+
+==================================================
+
+=== SCREEN: Avenor_Auth.html (Title: Avenor OS | Authentication) ===
+HEADINGS:
+  - Avenor OS
+  - Context BeforeIntelligence.
+  - Welcome back
+NAV LINKS:
+  - Forgot password? (#)
+  - Contact Sales (#)
+BUTTONS:
+  - Google
+  - GitHub
+  - Sign In to Workspacearrow_forward
+INPUTS:
+  - email: name@company.com
+  - password: ••••••••
+
+==================================================
+
+=== SCREEN: Avenor_Code_Studio.html (Title: Avenor_Code_Studio.html) ===
+HEADINGS:
+  - Avenor OS
+  - Avenor Assistant
+NAV LINKS:
+  - dashboardMission Control (#)
+  - search_checkInvestigations (#)
+  - hubKnowledge Graph (#)
+  - inventory_2Assets (#)
+  - insightsImpact Studio (#)
+  - terminalCode Studio (#)
+  - workWorkspace (#)
+  - settingsSettings (#)
+  - helpSupport (#)
+BUTTONS:
+  - notifications
+  - mergeOpen Pull Requestarrow_forward
+  - close
+  - auto_awesome
+INPUTS:
+  - text: Ask Avenor...
+
+==================================================
+
+=== SCREEN: Avenor_Impact_Studio.html (Title: Impact Studio | Avenor OS) ===
+HEADINGS:
+  - Avenor OS
+  - Impact Analysis
+  - Deprecate & Archive
+  - Soft Delete (Logic)
+  - Force Purge
+  - Impact Warning: Executive Dashboard
+NAV LINKS:
+  - dashboardMission Control (#)
+  - search_checkInvestigations (#)
+  - hubKnowledge Graph (#)
+  - inventory_2Assets (#)
+  - insightsImpact Studio (#)
+  - terminalCode Studio (#)
+  - workWorkspace (#)
+  - settingsSettings (#)
+  - helpSupport (#)
+BUTTONS:
+  - boltAI Status
+  - notifications
+  - apps
+  - Cancel Action
+  - Confirm Force Delete
+  - Notify Stakeholders
+  - Automate Fix
+  - close
+INPUTS:
+  - text: Enter command or query...
+
+==================================================
+
+=== SCREEN: Avenor_Investigation_History.html (Title: Avenor OS | Investigation History) ===
+HEADINGS:
+  - Investigation History
+  - Unusual Authentication Spike in Node-04
+  - Root Cause Analysis
+  - Business Impact
+  - Data Leakage Simulation - Dev Environment
+  - Anomaly Detection: Latency Outlier in South-West API
+  - Routine Maintenance: Certificate Rotation
+NAV LINKS:
+  - dashboardMission Control (#)
+  - search_checkInvestigations (#)
+  - hubKnowledge Graph (#)
+  - inventory_2Assets (#)
+  - insightsImpact Studio (#)
+  - terminalCode Studio (#)
+  - workWorkspace (#)
+  - settingsSettings (#)
+  - helpSupport (#)
+BUTTONS:
+  - addNew Investigation
+  - boltAI Status: Active
+  - notifications
+  - apps
+  - View Audit Log
+  - Open Detailed Report
+  - Load More Investigationsexpand_more
+INPUTS:
+  - text: Search investigations history...
+
+==================================================
+
+=== SCREEN: Avenor_Investigation_Workspace.html (Title: Avenor OS | Investigation Workspace) ===
+HEADINGS:
+  - Avenor OS
+  - Building Investigation Context
+  - Unauthorized Metadata Injection
+  - Live AI Activity
+NAV LINKS:
+  - dashboardMission Control (#)
+  - search_checkInvestigations (#)
+  - hubKnowledge Graph (#)
+  - inventory_2Assets (#)
+  - insightsImpact Studio (#)
+  - terminalCode Studio (#)
+  - workWorkspace (#)
+  - settingsSettings (#)
+  - helpSupport (#)
+BUTTONS:
+  - addNew Investigation
+  - notifications
+  - apps
+  - Execute Investigation
+  - View Trace
+  - boltQuick Remediation Action
+INPUTS:
+  - text: Search investigations...
+
+==================================================
+
+=== SCREEN: Avenor_Knowledge_Graph_Explorer.html (Title: Avenor OS | Knowledge Graph Explorer) ===
+HEADINGS:
+  - Avenor OS
+  - Customer LTV
+  - Subscription Data
+  - Churn Analysis
+  - Marketing Retention
+  - Exec Dashboard
+  - Asset Name
+  - Schema Structure
+  - Data Lineage
+  - AI Documentation
+NAV LINKS:
+  - dashboardMission Control (#)
+  - search_checkInvestigations (#)
+  - hubKnowledge Graph (#)
+  - inventory_2Assets (#)
+  - insightsImpact Studio (#)
+  - terminalCode Studio (#)
+  - workWorkspace (#)
+  - settingsSettings (#)
+  - helpSupport (#)
+BUTTONS:
+  - addNew Investigation
+  - notifications
+  - apps
+  - add
+  - remove
+  - center_focus_strong
+  - mapMini-map
+  - close
+  - Open in SQL Studio
+INPUTS:
+  - text: Search knowledge base...
+
+==================================================
+
+=== SCREEN: Avenor_Knowledge_Graph_Explorer_Pro.html (Title: Avenor OS | Knowledge Graph Explorer) ===
+HEADINGS:
+  - Avenor OS
+  - Financial Pipeline v2
+  - Customer Records
+  - ETL Transformer
+  - Risk Analysis Model
+  - Entity Name
+  - Core Schema
+  - Traceable Lineage
+  - AWS S3 Raw Ingest
+  - Snowflake Transform
+  - Contextual Visualization
+NAV LINKS:
+  - dashboardMission Control (#)
+  - search_checkInvestigations (#)
+  - hubKnowledge Graph (#)
+  - inventory_2Assets (#)
+  - insightsImpact Studio (#)
+BUTTONS:
+  - addNew Investigation
+  - notifications
+  - add
+  - remove
+  - filter_center_focus
+  - close
+  - Open Entity Studio
+  - share
+INPUTS:
+  - text: Query nodes, edges, or metadata...
+
+==================================================
+
+=== SCREEN: Avenor_Mission_Control.html (Title: Avenor OS - Mission Control) ===
+HEADINGS:
+  - Avenor
+  - What would you like Avenor to investigate today?
+  - Recent Investigations
+  - Fiscal Year Delta Analysis
+  - Threat Vector Map v2
+  - Live Investigations
+  - auto_awesomeAvenor Insights
+  - Platform Health
+NAV LINKS:
+  - dashboardMission Control (#)
+  - search_checkInvestigations (#)
+  - hubKnowledge Graph (#)
+  - inventory_2Assets (#)
+  - insightsImpact Studio (#)
+  - terminalCode Studio (#)
+  - workWorkspace (#)
+  - settingsSettings (#)
+  - helpSupport (#)
+  - View All (#)
+BUTTONS:
+  - AI Status
+  - New Investigation
+  - Executearrow_forward
+  - Quarterly Risk Matrix
+  - Productivity Leak Detection
+  - Market Sentiment Delta
+INPUTS:
+  - text: Explain the anomaly in North Region supply chain...
+
+==================================================
+
+=== SCREEN: Avenor_Workspace_Settings.html (Title: Avenor OS | Workspace Settings) ===
+HEADINGS:
+  - Avenor OS
+  - Workspace
+  - Personal
+  - Organization Settings
+  - LLM Providers
+  - OpenAI
+  - Anthropic
+  - GitHub
+  - DataHub
+NAV LINKS:
+  - dashboardMission Control (#)
+  - search_checkInvestigations (#)
+  - hubKnowledge Graph (#)
+  - inventory_2Assets (#)
+  - insightsImpact Studio (#)
+  - terminalCode Studio (#)
+  - workWorkspace (#)
+  - settingsSettings (#)
+  - helpSupport (#)
+  - Organizationchevron_right (#org)
+BUTTONS:
+  - notifications
+  - apps
+  - content_copy
+  - Manage Plan
+  - addAdd Repository
+  - Refresh Session
+  - Discard Changes
+  - Save Workspace Settings
+INPUTS:
+  - text: 
+  - text: 
+  - checkbox: 
+  - password: 
+  - checkbox: 
+  - password: 
+  - text: 
+
+==================================================
+
+=== SCREEN: Shader.html (Title: Shader.html) ===
+HEADINGS:
+NAV LINKS:
+BUTTONS:
+INPUTS:
+
+==================================================

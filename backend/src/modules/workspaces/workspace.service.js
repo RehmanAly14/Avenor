@@ -7,7 +7,7 @@
 //   - Members with roles (admin, editor, viewer)
 //   - Projects
 //   - AI agent configurations
-//   - Shared DataHub connections
+//   - Shared DataIncident connections (future)
 //
 // The service layer is designed to accommodate this growth
 // without restructuring. Add new methods here.
