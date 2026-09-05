@@ -22,8 +22,12 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // DATABASE_URL goes through Supabase's transaction-mode pgbouncer pooler
+  // (safe for normal query concurrency); migrations need a direct/session
+  // connection to take advisory locks and run DDL, hence directUrl.
+  directUrl = env("DIRECT_URL")
 }
 
 // ──────────────────────────────────────────────────────────
@@ -41,8 +45,10 @@ model User {
   updatedAt DateTime @updatedAt     @map("updated_at")
 
   // Relations
-  projects   Project[]
-  workspaces Workspace[]
+  projects          Project[]
+  workspaces        Workspace[]
+  githubConnections GitHubConnection[]
+  githubOAuthStates GitHubOAuthState[]
 
   @@map("users")
 }
@@ -65,11 +71,21 @@ model Project {
   ownerId String @map("owner_id")
   owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
-  dataSources    DataSource[]
-  metadataAssets MetadataAsset[]
-  documents      Document[]
+  dataSources      DataSource[]
+  metadataAssets   MetadataAsset[]
+  documents        Document[]
+  metadataLineages MetadataLineage[]
+  dataIncidents    DataIncident[]
+
+  // The GitHub repository this project's autonomous fixes are proposed
+  // against. Optional — a project with no repository connected can still
+  // run investigations, it just can't reach the GitHub PR step.
+  githubRepositoryId String?           @map("github_repository_id")
+  githubRepository   GitHubRepository? @relation(fields: [githubRepositoryId], references: [id], onDelete: SetNull)
+  githubBranch       String?           @map("github_branch")
 
   @@index([ownerId])
+  @@index([githubRepositoryId])
   @@map("projects")
 }
 
@@ -97,6 +113,8 @@ model Workspace {
   metadataTags     MetadataTag[]
   metadataDomains  MetadataDomain[]
   documents        Document[]
+  metadataLineages MetadataLineage[]
+  dataIncidents    DataIncident[]
 
   @@index([ownerId])
   @@map("workspaces")
@@ -299,7 +317,7 @@ model MetadataLineage {
   workspaceId      String              @map("workspace_id")
   sourceAssetId    String              @map("source_asset_id")
   targetAssetId    String              @map("target_asset_id")
-  relationshipType MetadataLineageType
+  relationshipType MetadataLineageType @map("relationship_type")
   confidence       Float               @default(1.0)
   metadata         Json?
   createdAt        DateTime            @default(now()) @map("created_at")
@@ -341,6 +359,82 @@ enum DataIncidentSeverity {
   CRITICAL
 }
 
+// ──────────────────────────────────────────────────────────
+// InvestigationStage
+// Granular pipeline state for the autonomous investigation
+// orchestrator (Planner -> Investigator -> Impact -> Fixer ->
+// Documentation). Distinct from DataIncidentStatus, which tracks
+// the coarse incident lifecycle (OPEN/INVESTIGATING/RESOLVED/FAILED)
+// and is set by the Phase 1 `analyze` endpoint.
+// ──────────────────────────────────────────────────────────
+enum InvestigationStage {
+  PENDING
+  PLANNING
+  INVESTIGATING
+  ANALYZING_IMPACT
+  GENERATING_FIX
+  DOCUMENTING
+  COMPLETED
+  FAILED
+}
+
+// ──────────────────────────────────────────────────────────
+// FixApprovalStatus
+// Lifecycle of a proposed fix, independent of InvestigationStage
+// (which tracks the read-only investigation pipeline). Human
+// approval is mandatory before a pull request is ever opened —
+// APPROVED is only ever set by an explicit
+// POST /investigations/:id/fix/approve call, never automatically.
+// ──────────────────────────────────────────────────────────
+enum FixApprovalStatus {
+  PROPOSED
+  VALIDATED
+  AWAITING_APPROVAL
+  APPROVED
+  REJECTED
+  PR_CREATED
+  RESOLVED
+}
+
+// ──────────────────────────────────────────────────────────
+// IncidentEvent
+// Append-only timeline of everything the autonomous pipeline (and
+// human reviewers) did to an incident — powers GET
+// /investigations/:id/timeline for the frontend's process view.
+// ──────────────────────────────────────────────────────────
+enum IncidentEventType {
+  INVESTIGATION_STARTED
+  ASSET_RESOLVED
+  ROOT_CAUSE_FOUND
+  IMPACT_ANALYZED
+  FIX_GENERATED
+  FIX_VALIDATED
+  AWAITING_APPROVAL
+  FIX_APPROVED
+  FIX_REJECTED
+  GITHUB_BRANCH_CREATED
+  GITHUB_PR_CREATED
+  GITHUB_PR_MERGED
+  GITHUB_PR_CLOSED
+  DOCUMENTATION_GENERATED
+  INCIDENT_RESOLVED
+}
+
+model IncidentEvent {
+  id         String            @id @default(uuid())
+  incidentId String            @map("incident_id")
+  type       IncidentEventType
+  message    String
+  metadata   Json?
+  createdAt  DateTime          @default(now()) @map("created_at")
+
+  incident DataIncident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+
+  @@index([incidentId])
+  @@index([type])
+  @@map("incident_events")
+}
+
 model DataIncident {
   id              String               @id @default(uuid())
   projectId       String               @map("project_id")
@@ -349,18 +443,130 @@ model DataIncident {
   description     String?
   status          DataIncidentStatus   @default(OPEN)
   severity        DataIncidentSeverity @default(MEDIUM)
-  rootCause       String?
-  affectedAssets  Json?
+  rootCause       String?              @map("root_cause")
+  affectedAssets  Json?                @map("affected_assets")
   resolution      String?
   createdAt       DateTime             @default(now()) @map("created_at")
   updatedAt       DateTime             @updatedAt @map("updated_at")
 
-  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  // Autonomous pipeline state (Phase 2). Each field is the structured
+  // output of one orchestrator stage, persisted so a run can be
+  // inspected or resumed without recomputation.
+  stage         InvestigationStage @default(PENDING)
+  plan          Json?
+  evidence      Json?
+  impact        Json?
+  proposedFix   Json?              @map("proposed_fix")
+  documentation Json?
+  error         String?
+
+  // Fix approval + GitHub PR lifecycle (Phase 3). fixApprovalStatus is
+  // null until the Fixer stage produces a proposal.
+  fixApprovalStatus FixApprovalStatus? @map("fix_approval_status")
+  fixValidation     Json?              @map("fix_validation")
+  approvedAt        DateTime?          @map("approved_at")
+  rejectedAt        DateTime?          @map("rejected_at")
+  rejectionReason   String?            @map("rejection_reason")
+  githubPr          Json?              @map("github_pr")
+
+  project   Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  workspace Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  events    IncidentEvent[]
 
   @@index([projectId])
   @@index([workspaceId])
   @@index([status])
   @@index([severity])
+  @@index([stage])
+  @@index([fixApprovalStatus])
   @@map("data_incidents")
+}
+
+// ──────────────────────────────────────────────────────────
+// GitHub Connection (Phase 4A)
+//
+// GitHub credentials belong to the user/integration layer, not to any
+// one investigation. A user connects their GitHub account once (OAuth
+// App flow — see src/integrations/github/README.md for why an OAuth
+// App was chosen over a full GitHub App), then links specific
+// repositories to specific Projects. The fix/PR flow resolves
+// credentials by walking Project -> GitHubRepository -> GitHubConnection,
+// falling back to the legacy global GITHUB_TOKEN/OWNER/REPO env vars
+// when a project has no repository connected.
+//
+// The access token is never stored in plaintext — see
+// encryptedAccessToken, encrypted with the same AES-256-GCM utility
+// (src/utils/encryption.js) already used for DataSource credentials.
+// It is never selected into an API response.
+// ──────────────────────────────────────────────────────────
+enum GitHubConnectionStatus {
+  ACTIVE
+  REVOKED
+}
+
+model GitHubConnection {
+  id                   String                 @id @default(uuid())
+  userId               String                 @map("user_id")
+  githubUserId         String                 @map("github_user_id")
+  githubLogin          String                 @map("github_login")
+  githubAvatarUrl      String?                @map("github_avatar_url")
+  encryptedAccessToken String                 @map("encrypted_access_token")
+  scope                String?
+  status               GitHubConnectionStatus @default(ACTIVE)
+  createdAt            DateTime               @default(now()) @map("created_at")
+  updatedAt            DateTime               @updatedAt @map("updated_at")
+
+  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  repositories GitHubRepository[]
+
+  // One connection per (user, GitHub account) — reconnecting the same
+  // GitHub account refreshes the token instead of creating a duplicate.
+  // A user may still hold multiple connections, one per distinct account.
+  @@unique([userId, githubUserId])
+  @@index([userId])
+  @@map("github_connections")
+}
+
+// A repository the connected GitHub account can access, discovered via
+// GET /github/repositories and cached so /select can reference a stable
+// internal id. githubRepositoryId is GitHub's own numeric id (stored as
+// a string — safely outside Int4 range for newer repos, and avoids
+// BigInt/JSON-serialization friction in API responses).
+model GitHubRepository {
+  id                 String   @id @default(uuid())
+  connectionId       String   @map("connection_id")
+  githubRepositoryId String   @map("github_repository_id")
+  owner              String
+  name               String
+  fullName           String   @map("full_name")
+  private            Boolean  @default(false)
+  defaultBranch      String   @default("main") @map("default_branch")
+  htmlUrl            String   @map("html_url")
+  permissions        Json?
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  connection GitHubConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  projects   Project[]
+
+  @@unique([connectionId, githubRepositoryId])
+  @@index([connectionId])
+  @@map("github_repositories")
+}
+
+// Short-lived, single-use OAuth CSRF state, tied to the authenticated
+// user who initiated GET /github/connect. Validated (not expired, not
+// already used) before GET /github/callback exchanges the code.
+model GitHubOAuthState {
+  id        String    @id @default(uuid())
+  state     String    @unique
+  userId    String    @map("user_id")
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("github_oauth_states")
 }

@@ -76,4 +76,28 @@ export const env = Object.freeze({
   // ---- App ----
   APP_NAME: optionalEnv("APP_NAME", "Avenor"),
   API_VERSION: optionalEnv("API_VERSION", "v1"),
+
+  // ---- AI Provider (optional — agents fall back to deterministic
+  // templates when unset, see src/ai/providers/) ----
+  AI_PROVIDER: optionalEnv("AI_PROVIDER", ""),
+  AI_MODEL: optionalEnv("AI_MODEL", "accounts/fireworks/models/llama-v3p1-70b-instruct"),
+  FIREWORKS_API_KEY: optionalEnv("FIREWORKS_API_KEY", ""),
+
+  // ---- GitHub Integration (optional — PR creation returns a clean
+  // config error, never crashes, when unset; see src/integrations/github/) ----
+  // Legacy global fallback (Phase 3) — used only when a project has no
+  // GitHub repository connected via the OAuth flow below.
+  GITHUB_TOKEN: optionalEnv("GITHUB_TOKEN", ""),
+  GITHUB_OWNER: optionalEnv("GITHUB_OWNER", ""),
+  GITHUB_REPO: optionalEnv("GITHUB_REPO", ""),
+  GITHUB_DEFAULT_BRANCH: optionalEnv("GITHUB_DEFAULT_BRANCH", "main"),
+
+  // GitHub OAuth App (Phase 4A) — user-facing "Connect GitHub" flow.
+  // GITHUB_REDIRECT_URI must exactly match the callback URL registered
+  // with the OAuth App; left unset, it's derived from the request
+  // (fine for local dev, set explicitly in production).
+  GITHUB_CLIENT_ID: optionalEnv("GITHUB_CLIENT_ID", ""),
+  GITHUB_CLIENT_SECRET: optionalEnv("GITHUB_CLIENT_SECRET", ""),
+  GITHUB_REDIRECT_URI: optionalEnv("GITHUB_REDIRECT_URI", ""),
+  GITHUB_WEBHOOK_SECRET: optionalEnv("GITHUB_WEBHOOK_SECRET", ""),
 });

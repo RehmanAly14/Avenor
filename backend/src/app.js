@@ -36,7 +36,11 @@ app.use(
 app.use(morgan(env.IS_PRODUCTION ? "combined" : "dev"));
 
 // ── Body Parsers ───────────────────────────────────────────
-app.use(express.json({ limit: "1mb" }));
+// `verify` stashes the raw request body alongside the parsed one —
+// needed by POST /github/webhook to verify GitHub's HMAC signature,
+// which must be computed over the exact raw bytes, not a re-serialized
+// copy. Harmless for every other route: it's just an extra buffer.
+app.use(express.json({ limit: "1mb", verify: (req, _res, buf) => { req.rawBody = buf; } }));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
 // ── Rate Limiting ──────────────────────────────────────────

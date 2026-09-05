@@ -23,8 +23,12 @@ import projectRoutes from "../modules/projects/project.routes.js";
 import workspaceRoutes from "../modules/workspaces/workspace.routes.js";
 import dataSourceRoutes from "../modules/datasources/datasource.routes.js";
 import metadataRoutes from "../modules/metadata/metadata.routes.js";
+import metadataIntelligenceRoutes from "../modules/metadata-intelligence/metadata-intelligence.routes.js";
 import catalogRoutes from "../modules/catalog/catalog.routes.js";
 import documentRoutes from "../modules/documents/document.routes.js";
+import investigationRoutes from "../modules/investigation/investigation.routes.js";
+import githubRoutes from "../integrations/github/github.routes.js";
+import githubConnectionRoutes from "../integrations/github/github-connection.routes.js";
 
 const router = Router();
 
@@ -63,13 +67,14 @@ router.use("/projects", projectRoutes);
 router.use("/workspaces", workspaceRoutes);
 router.use("/datasources", dataSourceRoutes);
 router.use("/metadata", metadataRoutes);
+router.use("/metadata", metadataIntelligenceRoutes);
 router.use("/catalog", catalogRoutes);
 router.use("/documents", documentRoutes);
+router.use("/investigations", investigationRoutes);
+router.use("/investigations", githubRoutes);
+router.use("/github", githubConnectionRoutes);
 
 // Future modules:
 // router.use("/agents", agentRoutes);
-// router.use("/metadata/lineage", lineageRoutes);
-// router.use("/metadata/intelligence", metadataIntelligenceRoutes);
-// router.use("/investigations", investigationRoutes);
 
 export default router;

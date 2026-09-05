@@ -54,6 +54,32 @@ Prisma ORM
 PostgreSQL
 ```
 
+### Avenor Metadata Intelligence Engine
+
+Avenor originally targeted DataHub as its metadata/catalog layer. DataHub's local Docker stack (Kafka, Zookeeper, Elasticsearch, MySQL, GMS, frontend — 6+ containers) was too heavy for this project's development environment, so it has been replaced end-to-end with a PostgreSQL-backed **Metadata Intelligence Engine**: no extra infrastructure, same Prisma database the rest of the API already uses.
+
+```
+PostgreSQL
+     │  MetadataAsset / MetadataSchema / MetadataColumn
+     │  MetadataOwner / MetadataTag / MetadataDomain
+     ▼
+Metadata Layer            (src/modules/metadata, src/modules/catalog)
+     │  MetadataLineage — recursive CTEs, cycle-safe traversal
+     ▼
+Lineage Engine             (src/modules/metadata-intelligence)
+     │  downstream traversal + asset-type categorization
+     ▼
+Impact Analysis            (src/modules/metadata-intelligence)
+     │  DataIncident + deterministic root-cause/recommendation engine
+     ▼
+Investigation Engine       (src/modules/investigation)
+     │  provider-agnostic tool interface
+     ▼
+AI Agents                  (src/ai — tools/, agents/, orchestrator/)
+```
+
+Every layer above is queried through Prisma against the same PostgreSQL database — there is no separate metadata store, search index, or message broker to run or keep in sync.
+
 ---
 
 ## Project Structure
@@ -89,11 +115,38 @@ server/
 │   │   │   ├── project.service.js
 │   │   │   └── project.validation.js
 │   │   │
-│   │   └── workspaces/
-│   │       ├── workspace.routes.js
-│   │       ├── workspace.controller.js
-│   │       ├── workspace.service.js
-│   │       └── workspace.validation.js
+│   │   ├── workspaces/
+│   │   │   ├── workspace.routes.js
+│   │   │   ├── workspace.controller.js
+│   │   │   ├── workspace.service.js
+│   │   │   └── workspace.validation.js
+│   │   │
+│   │   ├── metadata-intelligence/     # Lineage, impact analysis, search, schema diff
+│   │   │   ├── metadata-intelligence.routes.js
+│   │   │   ├── metadata-intelligence.controller.js
+│   │   │   ├── metadata-intelligence.service.js
+│   │   │   ├── metadata-intelligence.validation.js
+│   │   │   └── schema-change.service.js
+│   │   │
+│   │   └── investigation/             # Investigation engine + fix approval lifecycle
+│   │       ├── investigation.routes.js
+│   │       ├── investigation.controller.js
+│   │       ├── investigation.service.js
+│   │       ├── investigation.validation.js
+│   │       ├── fix.service.js           # Fix approval state machine (validate/approve/reject)
+│   │       └── incident-event.service.js # Append-only IncidentEvent timeline
+│   │
+│   ├── integrations/
+│   │   └── github/                            # See src/integrations/github/README.md
+│   │       ├── github.client.js                 # Raw REST v3 fetch wrapper, no SDK, {token,owner,repo} ctx
+│   │       ├── github.service.js                # createIncidentPullRequest — the fix/PR flow
+│   │       ├── github.controller.js / .routes.js  # POST /investigations/:id/fix/pr
+│   │       ├── github.types.js
+│   │       ├── github.oauth.js                  # OAuth App: authorize URL, code exchange, profile/repos
+│   │       ├── github.webhook.js                # HMAC signature verification + pull_request handling
+│   │       ├── github-connection.service.js     # Connect/callback/status/account/repositories/select/disconnect
+│   │       ├── github-connection.controller.js / .routes.js  # Mounted at /github
+│   │       └── github-connection.validation.js
 │   │
 │   ├── routes/
 │   │   └── index.js            # Central route registry
@@ -113,7 +166,11 @@ server/
 │   ├── database/
 │   │   └── index.js            # DB connect/disconnect lifecycle
 │   │
-│   ├── ai/                     # ← Reserved for AI agents (empty)
+│   ├── ai/                     # AI agent infrastructure (see src/ai/README.md)
+│   │   ├── providers/            # Swappable LLM abstraction (Fireworks; optional)
+│   │   ├── tools/                # Provider-agnostic tools wrapping the Intelligence Engine
+│   │   ├── agents/                # planner/ investigator/ impact/ fixer/ validator/ documentation/
+│   │   ├── orchestrator/         # Runs the pipeline, persists state, builds the report
 │   │   └── README.md
 │   │
 │   ├── app.js                  # Express app factory
@@ -359,6 +416,159 @@ Project + Workspace
   └─ Document
 ```
 
+### Avenor Metadata Intelligence Engine
+
+All endpoints below are private and use the same response envelope as the rest of the API.
+
+| Module | Endpoints |
+|---|---|
+| Lineage | `POST /metadata/lineage`, `GET /metadata/lineage/:assetId`, `GET /metadata/lineage/:assetId/upstream`, `GET /metadata/lineage/:assetId/downstream`, `GET /metadata/lineage/:assetId/graph` |
+| Impact analysis | `GET /metadata/impact/:assetId` |
+| Metadata search | `GET /metadata/intelligence/search?q=` |
+| Schema comparison | `POST /metadata/schema/compare` |
+| Investigations | `POST /investigations`, `GET /investigations`, `GET /investigations/:id`, `POST /investigations/:id/analyze` |
+
+**Create a lineage edge:**
+```json
+POST /metadata/lineage
+{
+  "sourceAssetId": "b2b1...",
+  "targetAssetId": "c3d4...",
+  "relationshipType": "DOWNSTREAM",
+  "confidence": 0.95,
+  "metadata": { "source": "dbt", "detectedBy": "manual" }
+}
+```
+`sourceAssetId` and `targetAssetId` must differ (rejected with `422`) and must resolve to assets in the same project/workspace. Duplicate `(source, target, relationshipType)` triples are rejected with `409` by the underlying unique constraint.
+
+**Lineage graph (React Flow-ready):**
+```json
+GET /metadata/lineage/:assetId/graph
+→ { "data": { "nodes": [{ "id": "...", "position": { "x": 0, "y": 0 }, "data": { "label": "orders", "depth": 0 } }], "edges": [{ "id": "...", "source": "...", "target": "...", "label": "DOWNSTREAM" }] } }
+```
+
+**Impact analysis:**
+```json
+GET /metadata/impact/:assetId
+→ { "data": { "asset": {}, "affectedAssets": [{ "id": "...", "name": "revenue_dashboard", "depth": 3 }], "affectedDashboards": [], "affectedModels": [], "affectedPipelines": [], "totalImpact": 3 } }
+```
+Traversal is a single recursive SQL query (no N+1), guards against cycles with a path check, and caps at depth 25 as a hard safety net.
+
+**Schema comparison** accepts either two `MetadataSchema` ids or two raw column snapshots:
+```json
+POST /metadata/schema/compare
+{ "oldColumns": [{ "name": "customer_status", "dataType": "VARCHAR" }], "newColumns": [] }
+→ { "data": { "changes": [{ "type": "COLUMN_REMOVED", "column": "customer_status", "severity": "HIGH" }] } }
+```
+Detected change types: `COLUMN_ADDED`, `COLUMN_REMOVED`, `COLUMN_RENAMED` (heuristic: same data type + similar name), `TYPE_CHANGED`, `NULLABLE_CHANGED`.
+
+**Investigations** are stored as `DataIncident` rows. `POST /investigations` opens one (`status: "OPEN"`); `POST /investigations/:id/analyze` runs the deterministic investigation engine (loads the asset, its schema, upstream/downstream lineage, owners, recent schema changes, and impact analysis) and returns:
+```json
+{
+  "incident": {},
+  "rootAsset": {},
+  "rootCauseCandidates": [],
+  "schemaChanges": [],
+  "upstreamAssets": [],
+  "downstreamAssets": [],
+  "affectedAssets": [],
+  "owners": [],
+  "recommendations": []
+}
+```
+This is deterministic metadata reasoning — no LLM call. It is the tool the Investigation Agent (`src/ai/agents/investigator`) calls into.
+
+### Autonomous Investigation Pipeline (Phase 2)
+
+`POST /investigations/:id/analyze` (above) is the manual, single-hop mode — you supply the asset. `POST /investigations/:id/run` is the **autonomous** mode: given just the incident's `title`/`description`, it resolves the affected asset, traces root cause across the lineage graph (walking upstream past the reported asset if needed), analyzes impact, proposes a fix, and generates documentation — end to end, synchronously, in one call.
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/investigations/:id/run` | Runs the full pipeline (Planner → Investigator → Impact → Fixer → Documentation) and returns the final stage |
+| `GET` | `/investigations/:id/status` | Reads back the persisted `stage`/`status`/`error` — no recomputation |
+| `GET` | `/investigations/:id/report` | Reads back the full structured report — no recomputation |
+
+```json
+POST /api/v1/investigations
+{ "title": "Monthly Revenue dashboard is broken", "description": "Started failing after yesterday's deployment.", "workspaceId": "...", "projectId": "..." }
+
+POST /api/v1/investigations/:id/run
+→ { "data": { "investigationId": "...", "status": "COMPLETED", "error": null } }
+
+GET /api/v1/investigations/:id/report
+→ {
+  "data": {
+    "complete": true,
+    "stage": "COMPLETED",
+    "rootCause": { "type": "COLUMN_REMOVED", "column": "customer_status", "confidence": 0.85, "description": "..." },
+    "evidence": [{ "asset": "orders", "finding": "Column \"customer_status\" was removed from the schema." }],
+    "lineage": ["raw_orders", "orders", "revenue_model", "monthly_revenue", "revenue_dashboard"],
+    "impact": { "summary": { "totalAffected": 3 }, "categories": { "dashboards": 1, "mlModels": 2, "pipelines": 0, "datasets": 0 }, "risk": "HIGH" },
+    "proposedFix": { "status": "PROPOSED", "fixType": "COLUMN_REMOVED", "summary": "...", "sql": "...", "tests": [], "files": [], "risk": "HIGH" },
+    "validation": { "valid": true, "risk": "LOW", "warnings": [], "blocked": false },
+    "github": { "branch": "...", "prNumber": 42, "prUrl": "..." },
+    "documentation": { "rootCause": "...", "resolution": { "status": "...", "timestamp": "..." }, "recommendations": [] },
+    "timeline": [{ "type": "INVESTIGATION_STARTED", "message": "...", "createdAt": "..." }],
+    "recommendation": "Avenor identified ... A pull request is ready for review: ..."
+  }
+}
+```
+
+`InvestigationStage` moves `PENDING → PLANNING → INVESTIGATING → ANALYZING_IMPACT → GENERATING_FIX → DOCUMENTING → COMPLETED`, or `FAILED` with a human-readable `error` if any stage throws (e.g. the Planner can't resolve an asset from the given text). Every stage's output is persisted on the `DataIncident` row as it completes.
+
+**Safety:** every proposed fix is returned with `status: "PROPOSED"`. Nothing in this pipeline executes SQL, writes to a source database, merges code, or deploys — see `src/ai/README.md#safety`.
+
+### Fix Approval & GitHub PR (Phase 3)
+
+The pipeline above only ever produces a **proposal**. Turning it into a pull request is a separate, explicitly human-gated lifecycle tracked by `FixApprovalStatus`:
+
+```
+PROPOSED → (VALIDATED →) AWAITING_APPROVAL → APPROVED → PR_CREATED → RESOLVED
+                                                  ↘ REJECTED (any point before a PR exists)
+```
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/investigations/:id/fix` | The proposed fix, its approval status, validation result, and GitHub PR info (if any) |
+| `POST` | `/investigations/:id/fix/validate` | Runs the deterministic Validator agent; advances to `AWAITING_APPROVAL` if safe, stays `PROPOSED` (blocked) if not |
+| `POST` | `/investigations/:id/fix/approve` | **The only thing that ever sets `APPROVED`.** Also attempts GitHub PR creation immediately afterward |
+| `POST` | `/investigations/:id/fix/reject` | `{ "reason"?: "..." }` — rejects a fix that hasn't reached `PR_CREATED` yet |
+| `POST` | `/investigations/:id/fix/pr` | On-demand/retry PR creation (e.g. if GitHub wasn't connected or failed at approval time) |
+| `GET` | `/investigations/:id/timeline` | Ordered `IncidentEvent` log of everything the pipeline (and reviewers) did |
+
+A blocked fix (destructive SQL, wrong target asset, etc.) can never reach `AWAITING_APPROVAL`, and therefore can never be approved — `POST /fix/validate` is a hard gate, enforced server-side, not just a UI affordance.
+
+`PR_CREATED` means a pull request is open and reviewable — it is **not** the same as resolved. `RESOLVED` is only ever set once GitHub's webhook confirms the PR was actually merged (see below); if GitHub isn't connected for the project (and no global fallback is set), `POST /fix/approve` still succeeds (the fix is `APPROVED`) but returns a `githubError` note instead of crashing, and `POST /fix/pr` can be retried once a repository is connected.
+
+### GitHub Connection (Phase 4A)
+
+Credentials belong to the user/integration layer, not to any one investigation:
+
+```
+User → GitHubConnection (OAuth-connected account) → GitHubRepository → Project
+```
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| `GET` | `/github/connect` | Private | Returns `{ url }` — a GitHub OAuth authorize URL bound to a fresh, single-use, 10-minute state |
+| `GET` | `/github/callback` | Public* | GitHub redirects here after authorization; validates state, exchanges the code, stores the connection |
+| `GET` | `/github/status` | Private | `{ connected, githubLogin, connectedAt }` |
+| `GET` | `/github/account` | Private | Live GitHub profile for the connected account |
+| `GET` | `/github/repositories` | Private | Live-discovers and normalizes accessible repositories |
+| `POST` | `/github/repositories/:id/select` | Private | `{ "projectId": "..." }` — links a repository to a project you own |
+| `DELETE` | `/github/connection` | Private | Disconnects GitHub (all connections for this user) |
+| `POST` | `/github/webhook` | Public* | GitHub `pull_request` events — signature-verified, not JWT-authenticated |
+
+\* Public here means "no JWT" — `/callback` is protected by its one-time OAuth `state`, and `/webhook` by an HMAC signature (`GITHUB_WEBHOOK_SECRET`). See `src/integrations/github/README.md` for the full security model, local setup, and why this is an OAuth App rather than a full GitHub App.
+
+Once a project has a repository connected, `POST /investigations/:id/fix/approve` and `/fix/pr` use that connection's token automatically — no per-investigation configuration. A project with nothing connected falls back to the legacy global `GITHUB_TOKEN`/`GITHUB_OWNER`/`GITHUB_REPO` env vars from Phase 3.
+
+A merged pull request (via the webhook) moves the incident to `FixApprovalStatus.RESOLVED` and `DataIncidentStatus.RESOLVED`, and logs `GITHUB_PR_MERGED` + `INCIDENT_RESOLVED` on the timeline; a closed-without-merge PR logs `GITHUB_PR_CLOSED` without resolving anything.
+
+### AI layer
+
+`src/ai/` hosts the provider-agnostic tool functions (`metadataSearchTool`, `getAssetTool`, `getUpstreamLineageTool`, `getDownstreamLineageTool`, `impactAnalysisTool`, `schemaChangeTool`, `getOwnerTool`, `getIncidentTool`), the Planner/Investigator/Impact/Fixer/Validator/Documentation agents, the orchestrator, and a swappable LLM provider abstraction (`AI_PROVIDER=fireworks`, optional — the pipeline, including validation and approval, is fully deterministic with it unset). Not exposed over HTTP directly; driven through `/investigations/:id/run` and `/investigations/:id/fix/*`. See `src/ai/README.md`.
+
 ---
 
 ## Environment Variables
@@ -374,6 +584,17 @@ Project + Workspace
 | `RATE_LIMIT_WINDOW_MS` | No | `900000` | Rate limit window (15 min) |
 | `RATE_LIMIT_MAX` | No | `100` | Max requests per window per IP |
 | `BCRYPT_ROUNDS` | No | `12` | bcrypt work factor |
+| `AI_PROVIDER` | No | *(empty)* | `fireworks` to enable AI-enriched agent prose; unset runs the investigation pipeline fully deterministically |
+| `AI_MODEL` | No | `accounts/fireworks/models/llama-v3p1-70b-instruct` | Model id passed to the provider |
+| `FIREWORKS_API_KEY` | No | — | Required only when `AI_PROVIDER=fireworks` |
+| `GITHUB_TOKEN` | No | — | Required for `/fix/approve` and `/fix/pr` to actually open a PR; both endpoints degrade to a clean `503` without it |
+| `GITHUB_OWNER` | No | — | Repository owner/org for PR creation |
+| `GITHUB_REPO` | No | — | Repository name for PR creation |
+| `GITHUB_DEFAULT_BRANCH` | No | `main` | Base branch PRs are opened against when a project has no repository connected |
+| `GITHUB_CLIENT_ID` | No | — | GitHub OAuth App client id — enables `GET /github/connect` |
+| `GITHUB_CLIENT_SECRET` | No | — | GitHub OAuth App client secret |
+| `GITHUB_REDIRECT_URI` | No | derived from the request | Must exactly match the OAuth App's registered callback URL in production |
+| `GITHUB_WEBHOOK_SECRET` | No | — | Enables `POST /github/webhook` signature verification |
 
 ---
 
