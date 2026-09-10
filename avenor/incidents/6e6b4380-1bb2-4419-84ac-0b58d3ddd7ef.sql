@@ -1,0 +1,2 @@
+-- No deterministic schema change was found for "3ebe0e15-3e50-4f05-9aff-55f5498779e0:revenue_dashboard".
+-- Manual investigation of the upstream source is recommended before proposing a fix.
