@@ -7,3 +7,4 @@ export const listDataSources = asyncHandler(async (req, res) => { const result =
 export const getDataSource = asyncHandler(async (req, res) => sendSuccess(res, { message: "Data source retrieved successfully.", data: { dataSource: await service.getDataSource(req.params.id, req.user.id) } }));
 export const updateDataSource = asyncHandler(async (req, res) => sendSuccess(res, { message: "Data source updated successfully.", data: { dataSource: await service.updateDataSource(req.params.id, req.user.id, req.body) } }));
 export const deleteDataSource = asyncHandler(async (req, res) => { await service.deleteDataSource(req.params.id, req.user.id); sendSuccess(res, { message: "Data source deleted successfully." }); });
+export const syncDataSource = asyncHandler(async (req, res) => sendSuccess(res, { message: "Data source synced successfully.", data: { summary: await service.syncDataSource(req.params.id, req.user.id) } }));

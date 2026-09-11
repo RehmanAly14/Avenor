@@ -1,0 +1,16 @@
+export const ROUTES = {
+  landing: "/",
+  login: "/login",
+  register: "/register",
+  dashboard: "/dashboard",
+  investigations: "/investigations",
+  newInvestigation: "/investigations/new",
+  investigationDetail: (id: string) => `/investigations/${id}`,
+  metadata: "/metadata",
+  metadataAsset: (id: string) => `/metadata/${id}`,
+  dataSources: "/datasources",
+  projects: "/projects",
+  workspaces: "/workspaces",
+  github: "/github",
+  settings: "/settings",
+} as const;

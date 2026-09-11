@@ -1,48 +1,55 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import AuthPage from './pages/AuthPage'
-import MissionControlPage from './pages/MissionControlPage'
-import InvestigationWorkspacePage from './pages/InvestigationWorkspacePage'
-import InvestigationHistoryPage from './pages/InvestigationHistoryPage'
-import KnowledgeGraphPage from './pages/KnowledgeGraphPage'
-import KnowledgeGraphProPage from './pages/KnowledgeGraphProPage'
-import AssetIntelligencePage from './pages/AssetIntelligencePage'
-import ImpactStudioPage from './pages/ImpactStudioPage'
-import CodeStudioPage from './pages/CodeStudioPage'
-import WorkspaceSettingsPage from './pages/WorkspaceSettingsPage'
-import AppLayout from './layouts/AppLayout' // Note: Layout is in layouts/AppLayout.tsx
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import AppLayout from "./layouts/AppLayout";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { ROUTES } from "./constants/routes";
+
+import LandingPage from "./pages/LandingPage";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
+import DashboardPage from "./pages/DashboardPage";
+import InvestigationsPage from "./pages/InvestigationsPage";
+import NewInvestigationPage from "./pages/NewInvestigationPage";
+import InvestigationDetailPage from "./pages/InvestigationDetailPage";
+import MetadataPage from "./pages/MetadataPage";
+import MetadataAssetDetailPage from "./pages/MetadataAssetDetailPage";
+import DataSourcesPage from "./pages/DataSourcesPage";
+import ProjectsPage from "./pages/ProjectsPage";
+import WorkspacesPage from "./pages/WorkspacesPage";
+import GitHubPage from "./pages/GitHubPage";
+import SettingsPage from "./pages/SettingsPage";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public Routes */}
-        <Route path="/auth" element={<AuthPage />} />
+        <Route path={ROUTES.landing} element={<LandingPage />} />
+        <Route path={ROUTES.login} element={<LoginPage />} />
+        <Route path={ROUTES.register} element={<RegisterPage />} />
 
-        {/* Protected Routes with Layout */}
-        <Route element={<AppLayout />}>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/dashboard" element={<MissionControlPage />} />
-          
-          {/* Investigations Routes */}
-          <Route path="/investigations/workspace" element={<InvestigationWorkspacePage />} />
-          <Route path="/investigations/history" element={<InvestigationHistoryPage />} />
-          
-          {/* Knowledge Graph Routes */}
-          <Route path="/knowledge-graph" element={<KnowledgeGraphPage />} />
-          <Route path="/knowledge-graph/pro" element={<KnowledgeGraphProPage />} />
-          
-          {/* Other Routes */}
-          <Route path="/assets" element={<AssetIntelligencePage />} />
-          <Route path="/impact-studio" element={<ImpactStudioPage />} />
-          <Route path="/code-studio" element={<CodeStudioPage />} />
-          <Route path="/settings" element={<WorkspaceSettingsPage />} />
+        <Route
+          element={
+            <ProtectedRoute>
+              <AppLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route path={ROUTES.dashboard} element={<DashboardPage />} />
+          <Route path={ROUTES.investigations} element={<InvestigationsPage />} />
+          <Route path={ROUTES.newInvestigation} element={<NewInvestigationPage />} />
+          <Route path="/investigations/:id" element={<InvestigationDetailPage />} />
+          <Route path={ROUTES.metadata} element={<MetadataPage />} />
+          <Route path="/metadata/:id" element={<MetadataAssetDetailPage />} />
+          <Route path={ROUTES.dataSources} element={<DataSourcesPage />} />
+          <Route path={ROUTES.projects} element={<ProjectsPage />} />
+          <Route path={ROUTES.workspaces} element={<WorkspacesPage />} />
+          <Route path={ROUTES.github} element={<GitHubPage />} />
+          <Route path={ROUTES.settings} element={<SettingsPage />} />
         </Route>
 
-        {/* 404 - Redirect to Dashboard */}
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={<Navigate to={ROUTES.landing} replace />} />
       </Routes>
     </BrowserRouter>
-  )
+  );
 }
 
-export default App
+export default App;

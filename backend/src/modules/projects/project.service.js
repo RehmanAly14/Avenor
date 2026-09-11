@@ -22,6 +22,8 @@ const PROJECT_SELECT = {
   ownerId: true,
   createdAt: true,
   updatedAt: true,
+  githubRepositoryId: true,
+  githubBranch: true,
   owner: {
     select: {
       id: true,

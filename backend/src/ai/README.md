@@ -42,6 +42,8 @@ Every transition — pipeline stage or fix-lifecycle step — is appended to the
 
 **No hallucination by design**: every factual claim (assets, schemas, lineage, owners, schema changes) comes from a tool call backed by Prisma. The optional AI provider is only ever asked to rephrase prose *around* already-computed facts (the Fixer's `explanation` and the Documentation agent's `summary`) — never to produce facts, and never to decide whether SQL is safe (that's the Validator's job, and it is 100% deterministic). Both prose spots have a template fallback used whenever no provider is configured or a provider call fails.
 
+Since none of this pipeline knows or cares where a `MetadataLineage` row came from, the Investigator's upstream walk (below) works identically whether that lineage was entered by hand or, as of the PostgreSQL data source sync (`POST /datasources/:id/sync`, see the top-level `README.md`), discovered automatically from a real database's foreign keys and view dependencies — no agent code changed to make that true.
+
 ## Tool Layer
 
 The `tools/` directory contains provider-agnostic functions that wrap the Metadata Intelligence Engine's services. Each tool accepts plain objects (including `userId` for workspace scoping) and returns structured JSON — no OpenAI/LangChain coupling.

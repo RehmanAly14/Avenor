@@ -394,7 +394,7 @@ All endpoints below are private and use the same response envelope as the rest o
 
 | Module | Endpoints |
 |---|---|
-| Data sources | `POST/GET /datasources`, `GET/PATCH/DELETE /datasources/:id` |
+| Data sources | `POST/GET /datasources`, `GET/PATCH/DELETE /datasources/:id`, `POST /datasources/:id/sync` |
 | Metadata | `POST/GET /metadata/assets`, `GET/PATCH/DELETE /metadata/assets/:id`; CRUD for `/metadata/owners`, `/metadata/tags`, and `/metadata/domains` |
 | Catalog | `GET /catalog/assets`, `GET /catalog/search`, `GET /catalog/:id` |
 | Documents | `POST /documents/upload`, `GET /documents`, `GET/DELETE /documents/:id` |
@@ -415,6 +415,33 @@ Project + Workspace
   ├─ MetadataDomain ─< assets
   └─ Document
 ```
+
+### PostgreSQL data source sync & lineage discovery
+
+`POST /datasources` live-tests the connection before saving (PostgreSQL only — MySQL is accepted by the schema for future use but rejected with a clear error today, since there's no driver wired up for it yet). `POST /datasources/:id/sync` then connects for real and reconciles two things into the metadata catalog, read-only, from PostgreSQL's own system catalogs — never from guessing:
+
+**What's automatically discovered:**
+- Tables, views, and materialized views, across every non-system schema (not just `public`) — `information_schema` for tables/views, `pg_catalog` directly for materialized views (which `information_schema` doesn't expose at all).
+- Columns and types for all three, and a new `MetadataSchema` snapshot only when a relation's columns actually changed since the last sync — this is what gives schema-change detection real history instead of hand-seeded fixtures.
+- **Foreign keys** — `orders.customer_id → customers.id` becomes a `customers → orders` lineage edge (`READS_FROM`). Read via `pg_constraint`/`pg_attribute` with `unnest(conkey, confkey) WITH ORDINALITY`, not `information_schema.constraint_column_usage`, whose own documentation notes it doesn't reliably preserve column order for composite (multi-column) foreign keys.
+- **View and materialized-view dependencies** — `orders → revenue_model` (a view built on `orders`), `revenue_model → monthly_revenue` (a materialized view built on that view), become `DERIVED_FROM` lineage edges. Read via `pg_depend`/`pg_rewrite` — every view and materialized view carries an internal rewrite rule, and Postgres records that rule's dependency on each relation it reads. Verified empirically against a real database with both a plain view and a materialized view stacked on top of each other before being relied on here.
+
+**What is deliberately NOT invented:** PostgreSQL's catalogs only prove *structural* dependencies (an FK constraint exists; a view's defining query reads a table). They say nothing about *analytical* lineage — e.g. that a `dbt` model transforms `orders` into `revenue_model` when that relationship lives in application/orchestration code rather than a real Postgres object. Avenor does not fabricate that. Future lineage providers (a `dbt manifest.json` reader, a SQL parser, query-history mining, AI inference over table/column names) are expected to feed the same `MetadataLineage` table — `src/integrations/postgres/postgres.lineage.js`'s `introspectLineage()` returns a database-independent `{source, target, relationshipType, discoveryMethod, confidence, metadata}` shape specifically so persistence (in `datasource.service.js`) never needs to know it came from PostgreSQL specifically.
+
+**Direction convention** (load-bearing — matches `traverseUpstream`/`traverseDownstream` in `metadata-intelligence.service.js`, not this task's own illustrative examples): `sourceAssetId` is always the upstream/cause side, `targetAssetId` the downstream/effect side, regardless of `relationshipType`'s label. A foreign key's source is the *referenced* table; a view dependency's source is the *base* relation.
+
+**Sync is idempotent and self-healing:** re-running sync against an unchanged database creates zero duplicate rows (`@@unique([sourceAssetId, targetAssetId, relationshipType])`, upserted). If a foreign key or view is later dropped from the real database, the next sync removes the corresponding `MetadataLineage` row automatically — but *only* rows this same PostgreSQL sync mechanism created (tagged `metadata: {provider: "POSTGRESQL", discoveryMethod: ...}`) between two assets that belong to *this* data source. Manually created lineage, and lineage from any future provider, is never touched. Two data sources never get cross-linked — lineage resolution only ever looks at the relations discovered in the current sync's own result.
+
+Schema introspection and lineage introspection fail independently: a sync summary always reports both, and a lineage failure (e.g. a restricted role that can query `information_schema` but not `pg_catalog`) doesn't roll back a successful schema sync:
+
+```json
+{
+  "tablesScanned": 5, "assetsCreated": 5, "assetsUpdated": 0, "schemaChangesDetected": 0,
+  "lineageDiscovered": 3, "lineageCreated": 3, "lineageRemoved": 0, "lineageError": null
+}
+```
+
+**Known limitation:** if a table is dropped from the source database entirely (not just a constraint on it), lineage edges that referenced it are not retroactively cleaned up, since the stale-removal pass only considers relations present in the *current* sync's asset list. The stray `MetadataAsset` itself is also never deleted by sync today (sync only creates/updates). Re-syncing after dropping a table is a case worth revisiting before this goes further than a hackathon build.
 
 ### Avenor Metadata Intelligence Engine
 

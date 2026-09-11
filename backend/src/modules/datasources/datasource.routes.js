@@ -6,4 +6,5 @@ import { createDataSourceSchema, updateDataSourceSchema, listDataSourcesQuerySch
 const router = Router(); router.use(authenticate);
 router.route("/").post(validate(createDataSourceSchema), controller.createDataSource).get(validate(listDataSourcesQuerySchema, "query"), controller.listDataSources);
 router.route("/:id").get(validate(dataSourceIdSchema, "params"), controller.getDataSource).patch(validate(dataSourceIdSchema, "params"), validate(updateDataSourceSchema), controller.updateDataSource).delete(validate(dataSourceIdSchema, "params"), controller.deleteDataSource);
+router.post("/:id/sync", validate(dataSourceIdSchema, "params"), controller.syncDataSource);
 export default router;
