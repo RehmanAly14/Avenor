@@ -7,11 +7,15 @@ import {
   ShieldCheck,
   ShieldAlert,
   CheckCircle2,
+  Circle,
   XCircle,
   GitPullRequest,
   ExternalLink,
   AlertTriangle,
   RefreshCcw,
+  ArrowRight,
+  ArrowDown,
+  ShieldOff,
 } from "lucide-react";
 import { Badge } from "../components/ui/Badge";
 import { StatusPill } from "../components/ui/StatusPill";
@@ -31,6 +35,7 @@ import { ApiError } from "../lib/api/client";
 import type { IncidentEventType } from "../lib/api/types";
 import { ROUTES } from "../constants/routes";
 import { formatRelativeTime } from "../utils/format";
+import { cn } from "../utils/cn";
 
 const TABS = ["overview", "lineage", "evidence", "impact", "fix", "timeline"] as const;
 type TabKey = (typeof TABS)[number];
@@ -64,6 +69,33 @@ function confidenceBucket(confidence: number): "LOW" | "MEDIUM" | "HIGH" {
   if (confidence >= 0.8) return "HIGH";
   if (confidence >= 0.5) return "MEDIUM";
   return "LOW";
+}
+
+interface PipelineStep {
+  label: string;
+  done: boolean;
+  detail?: string;
+}
+
+function PipelineSteps({ steps }: { steps: PipelineStep[] }) {
+  return (
+    <ol className="space-y-0">
+      {steps.map((step, i) => (
+        <li key={step.label} className="relative flex gap-3 pb-5 last:pb-0">
+          {i < steps.length - 1 && <span className="absolute left-2.25 top-6 h-[calc(100%-1.25rem)] w-px bg-border" aria-hidden />}
+          {step.done ? (
+            <CheckCircle2 className="mt-0.5 h-4.5 w-4.5 shrink-0 text-success" />
+          ) : (
+            <Circle className="mt-0.5 h-4.5 w-4.5 shrink-0 text-text-disabled" />
+          )}
+          <div className="min-w-0 flex-1 pt-px">
+            <p className={cn("text-sm font-medium", step.done ? "text-text-primary" : "text-text-tertiary")}>{step.label}</p>
+            {step.detail && <p className="mt-0.5 truncate font-mono text-xs text-text-tertiary">{step.detail}</p>}
+          </div>
+        </li>
+      ))}
+    </ol>
+  );
 }
 
 export default function InvestigationDetailPage() {
@@ -204,28 +236,78 @@ export default function InvestigationDetailPage() {
         <TabsContent value="overview" className="mt-6 space-y-5">
           {reportQuery.isLoading ? (
             <Skeleton className="h-48 w-full" />
-          ) : !report?.rootCause ? (
-            <EmptyState icon={<Database className="h-5 w-5" />} title="No root cause available yet" />
+          ) : !report ? (
+            <EmptyState icon={<Database className="h-5 w-5" />} title="No investigation report available yet" />
           ) : (
             <>
               <Card>
-                <CardContent className="space-y-3">
-                  <p className="text-xs font-medium uppercase tracking-wide text-text-tertiary">Root Cause</p>
-                  {report.rootCause.column && <p className="font-mono text-sm text-text-primary">{report.rootCause.column}</p>}
-                  <Badge tone="danger" className="font-mono">
-                    {report.rootCause.type}
-                  </Badge>
-                  <p className="text-sm leading-relaxed text-text-secondary">{report.rootCause.description}</p>
-                  <div className="flex items-center gap-2 pt-1">
-                    <span className="text-xs text-text-tertiary">Confidence</span>
-                    <StatusPill value={confidenceBucket(report.rootCause.confidence)} />
-                  </div>
+                <CardContent>
+                  <p className="mb-4 text-xs font-medium uppercase tracking-wide text-text-tertiary">Investigation pipeline</p>
+                  <PipelineSteps
+                    steps={[
+                      { label: "Incident detected", done: true, detail: investigation.title },
+                      { label: "Asset resolved", done: Boolean(report.evidence?.[0]?.asset), detail: report.evidence?.[0]?.asset },
+                      { label: "Lineage analyzed", done: report.lineage.length > 0, detail: report.lineage.length > 0 ? report.lineage.join(" → ") : undefined },
+                      { label: "Root cause identified", done: Boolean(report.rootCause), detail: report.rootCause?.column ?? report.rootCause?.type },
+                      { label: "Impact analyzed", done: Boolean(report.impact), detail: report.impact ? `${report.impact.summary.totalAffected} downstream asset(s)` : undefined },
+                      { label: "Safe fix generated", done: Boolean(report.proposedFix), detail: report.proposedFix?.fixType },
+                      { label: "Documentation generated", done: Boolean(report.documentation) },
+                    ]}
+                  />
                 </CardContent>
               </Card>
+
+              {!report.rootCause ? (
+                <EmptyState icon={<Database className="h-5 w-5" />} title="No root cause available yet" />
+              ) : (
+                <Card>
+                  <CardContent className="space-y-4">
+                    <p className="text-xs font-medium uppercase tracking-wide text-text-tertiary">Avenor found</p>
+
+                    <div>
+                      <p className="text-xs font-medium text-text-tertiary">Schema change</p>
+                      <Badge tone="danger" className="mt-1.5 font-mono">
+                        {report.rootCause.type}
+                      </Badge>
+                      {report.rootCause.column && <p className="mt-1.5 font-mono text-sm text-text-primary">{report.rootCause.column}</p>}
+                      <p className="mt-1.5 text-sm leading-relaxed text-text-secondary">{report.rootCause.description}</p>
+                    </div>
+
+                    {report.lineage.length > 0 && (
+                      <div>
+                        <p className="text-xs font-medium text-text-tertiary">Lineage evidence</p>
+                        <p className="mt-1.5 flex flex-wrap items-center gap-1.5 font-mono text-xs text-text-secondary">
+                          {report.lineage.map((asset, i) => (
+                            <span key={asset} className="flex items-center gap-1.5">
+                              {i > 0 && <ArrowRight className="h-3 w-3 text-text-tertiary" />}
+                              {asset}
+                            </span>
+                          ))}
+                        </p>
+                      </div>
+                    )}
+
+                    {report.impact && (
+                      <div>
+                        <p className="text-xs font-medium text-text-tertiary">Impact</p>
+                        <p className="mt-1.5 text-sm text-text-secondary">
+                          {report.impact.summary.totalAffected} downstream asset{report.impact.summary.totalAffected === 1 ? "" : "s"} depend on this data.
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-2 pt-1">
+                      <span className="text-xs text-text-tertiary">Confidence</span>
+                      <StatusPill value={confidenceBucket(report.rootCause.confidence)} />
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               {report.recommendation && (
                 <Card className="border-accent/25 bg-accent-muted/30">
                   <CardContent>
-                    <p className="text-xs font-medium uppercase tracking-wide text-accent-hover">Recommendation</p>
+                    <p className="text-xs font-medium uppercase tracking-wide text-accent-hover">Recommended action</p>
                     <p className="mt-2 text-sm leading-relaxed text-text-primary">{report.recommendation}</p>
                   </CardContent>
                 </Card>
@@ -282,6 +364,32 @@ export default function InvestigationDetailPage() {
                 <p className="text-sm text-text-secondary">Overall risk</p>
                 <StatusPill value={report.impact.risk} />
               </div>
+
+              <Card>
+                <CardContent className="space-y-0">
+                  {[
+                    { label: "Root cause", value: report.rootCause?.column ?? report.rootCause?.type ?? investigation.title, tone: "danger" as const },
+                    { label: "Directly affected", value: report.lineage[1] ?? "1 downstream asset", tone: "warning" as const },
+                    { label: "Downstream", value: `${report.impact.summary.totalAffected} asset${report.impact.summary.totalAffected === 1 ? "" : "s"}`, tone: "info" as const },
+                    { label: "Business impact", value: `${report.impact.categories.dashboards} dashboard${report.impact.categories.dashboards === 1 ? "" : "s"} affected`, tone: "accent" as const },
+                  ].map((row, i, arr) => (
+                    <div key={row.label} className="relative pl-1">
+                      <div className="flex items-center gap-3 py-2.5">
+                        <Badge tone={row.tone} className="w-36 shrink-0 justify-center uppercase">
+                          {row.label}
+                        </Badge>
+                        <p className="truncate font-mono text-sm text-text-primary">{row.value}</p>
+                      </div>
+                      {i < arr.length - 1 && (
+                        <div className="flex justify-start pl-16">
+                          <ArrowDown className="h-3.5 w-3.5 text-text-tertiary" />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
                 <Card>
                   <CardContent>
@@ -319,6 +427,11 @@ export default function InvestigationDetailPage() {
               </div>
               <p className="text-sm text-text-secondary">{fix.summary}</p>
               <CodeBlock code={fix.sql} language="sql" title={fix.fixType} />
+
+              <div className="flex items-start gap-2 rounded-md border border-border-subtle bg-surface-hover px-3.5 py-3 text-xs text-text-secondary">
+                <ShieldOff className="mt-0.5 h-3.5 w-3.5 shrink-0 text-text-tertiary" />
+                Avenor will not execute this change automatically. Human approval is required before anything is applied.
+              </div>
 
               {validation && (
                 <Card className={validation.blocked ? "border-danger/30" : undefined}>

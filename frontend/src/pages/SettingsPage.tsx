@@ -9,6 +9,7 @@ import { Input, Label } from "../components/ui/Input";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import { useToast } from "../components/ui/Toast";
 import { useAuth } from "../context/AuthContext";
+import { useLogout } from "../hooks/useLogout";
 import { useWorkspace } from "../context/WorkspaceContext";
 import * as usersApi from "../lib/api/users";
 import * as workspacesApi from "../lib/api/workspaces";
@@ -51,7 +52,8 @@ export default function SettingsPage() {
 }
 
 function ProfileTab() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
+  const logout = useLogout();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [name, setName] = useState(user?.name ?? "");
@@ -175,7 +177,7 @@ function LinkOutTab({ icon, title, description, to }: { icon: React.ReactNode; t
 }
 
 function SecurityTab() {
-  const { logout } = useAuth();
+  const logout = useLogout();
   const { toast } = useToast();
   const [confirmOpen, setConfirmOpen] = useState(false);
 

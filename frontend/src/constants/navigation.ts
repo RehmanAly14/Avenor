@@ -1,4 +1,15 @@
-import { LayoutDashboard, Search, Database, FolderKanban, Building2, GitBranch, Settings, Waypoints, type LucideIcon } from "lucide-react";
+import {
+  LayoutDashboard,
+  Search,
+  Database,
+  FolderKanban,
+  GitBranch,
+  Settings,
+  Waypoints,
+  Network,
+  FileText,
+  type LucideIcon,
+} from "lucide-react";
 import { ROUTES } from "./routes";
 
 export interface NavigationItem {
@@ -8,17 +19,37 @@ export interface NavigationItem {
   matchPrefix?: boolean;
 }
 
-export const primaryNavigation: NavigationItem[] = [
-  { label: "Dashboard", path: ROUTES.dashboard, icon: LayoutDashboard },
-  { label: "Investigations", path: ROUTES.investigations, icon: Search, matchPrefix: true },
-  { label: "Metadata", path: ROUTES.metadata, icon: Waypoints, matchPrefix: true },
-  { label: "Data Sources", path: ROUTES.dataSources, icon: Database },
-  { label: "Projects", path: ROUTES.projects, icon: FolderKanban },
-  { label: "Workspaces", path: ROUTES.workspaces, icon: Building2 },
-  { label: "GitHub", path: ROUTES.github, icon: GitBranch },
+export interface NavigationSection {
+  label: string;
+  items: NavigationItem[];
+}
+
+export const navigationSections: NavigationSection[] = [
+  {
+    label: "Workspace",
+    items: [
+      { label: "Overview", path: ROUTES.dashboard, icon: LayoutDashboard },
+      { label: "Investigations", path: ROUTES.investigations, icon: Search, matchPrefix: true },
+      { label: "Metadata", path: ROUTES.metadata, icon: Waypoints, matchPrefix: true },
+      { label: "Lineage", path: ROUTES.lineage, icon: Network },
+      { label: "Data Sources", path: ROUTES.dataSources, icon: Database },
+      { label: "Documents", path: ROUTES.documents, icon: FileText },
+    ],
+  },
+  {
+    label: "Engineering",
+    items: [
+      { label: "GitHub", path: ROUTES.github, icon: GitBranch },
+      { label: "Projects", path: ROUTES.projects, icon: FolderKanban },
+    ],
+  },
+  {
+    label: "System",
+    items: [{ label: "Settings", path: ROUTES.settings, icon: Settings }],
+  },
 ];
 
-export const secondaryNavigation: NavigationItem[] = [{ label: "Settings", path: ROUTES.settings, icon: Settings }];
+export const allNavigationItems: NavigationItem[] = navigationSections.flatMap((section) => section.items);
 
 export function isRouteActive(item: NavigationItem, pathname: string): boolean {
   return item.matchPrefix ? pathname.startsWith(item.path) : pathname === item.path;

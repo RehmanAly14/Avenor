@@ -15,3 +15,4 @@ export * from "./CodeBlock";
 export * from "./ConfirmDialog";
 export * from "./Table";
 export * from "./Timeline";
+export * from "./MetricCard";

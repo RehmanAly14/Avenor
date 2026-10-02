@@ -103,6 +103,7 @@ export function errorMiddleware(err, req, res, _next) {
       statusCode: err.statusCode,
       message: err.message,
       errors: err.errors,
+      code: err.code,
     });
   }
 

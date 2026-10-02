@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import {
-  Boxes,
   ArrowRight,
   Search,
   Waypoints,
@@ -16,6 +15,8 @@ import {
   Sparkles,
 } from "lucide-react";
 import { Button } from "../components/ui/Button";
+import { BrandLogo } from "../components/BrandLogo";
+import { useAuth } from "../context/AuthContext";
 import { ROUTES } from "../constants/routes";
 
 const oldWorkflow = ["Alert fires", "Investigate manually", "Find the owner", "Trace lineage by hand", "Guess root cause", "Write a fix", "Open a PR", "Document after the fact"];
@@ -42,29 +43,36 @@ const agents = [
 const lineageChain = ["raw_orders", "orders", "revenue_model", "monthly_revenue", "revenue_dashboard"];
 
 export default function LandingPage() {
+  const { isAuthenticated, isLoading } = useAuth();
+
   return (
     <div className="bg-background text-text-primary">
       {/* Nav */}
       <header className="sticky top-0 z-40 border-b border-border-subtle bg-background/85 backdrop-blur-md">
         <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3.5">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-accent text-on-accent">
-              <Boxes className="h-4 w-4" />
-            </div>
-            <span className="text-[15px] font-semibold tracking-tight">Avenor</span>
-          </div>
+          <BrandLogo size="sm" />
           <div className="hidden items-center gap-7 md:flex">
             <a href="#how-it-works" className="text-sm text-text-secondary hover:text-text-primary transition-colors">How it works</a>
             <a href="#agents" className="text-sm text-text-secondary hover:text-text-primary transition-colors">Agents</a>
             <a href="#safety" className="text-sm text-text-secondary hover:text-text-primary transition-colors">Safety</a>
           </div>
           <div className="flex items-center gap-2">
-            <Link to={ROUTES.login}>
-              <Button variant="ghost" size="sm">Sign in</Button>
-            </Link>
-            <Link to={ROUTES.register}>
-              <Button size="sm">Start investigating</Button>
-            </Link>
+            {isLoading ? (
+              <div className="h-8 w-24" aria-hidden />
+            ) : isAuthenticated ? (
+              <Link to={ROUTES.dashboard}>
+                <Button size="sm">Dashboard</Button>
+              </Link>
+            ) : (
+              <>
+                <Link to={ROUTES.login}>
+                  <Button variant="ghost" size="sm">Sign in</Button>
+                </Link>
+                <Link to={ROUTES.register}>
+                  <Button size="sm">Start investigating</Button>
+                </Link>
+              </>
+            )}
           </div>
         </nav>
       </header>
@@ -90,13 +98,16 @@ export default function LandingPage() {
             <div className="flex flex-wrap items-center gap-3 pt-2">
               <Link to={ROUTES.register}>
                 <Button size="lg">
-                  Start investigating <ArrowRight className="h-4 w-4" />
+                  Start Investigation <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
-              <a href="#how-it-works">
-                <Button variant="outline" size="lg">See how it works</Button>
-              </a>
+              <Link to={ROUTES.register}>
+                <Button variant="outline" size="lg">Connect Data Source</Button>
+              </Link>
             </div>
+            <a href="#how-it-works" className="inline-block text-sm text-text-tertiary hover:text-text-secondary">
+              See how it works ↓
+            </a>
           </div>
 
           {/* Hero product visualization */}
@@ -315,12 +326,7 @@ export default function LandingPage() {
 
       <footer className="border-t border-border-subtle px-6 py-8">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 sm:flex-row">
-          <div className="flex items-center gap-2">
-            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-accent text-on-accent">
-              <Boxes className="h-3.5 w-3.5" />
-            </div>
-            <span className="text-sm font-medium text-text-secondary">Avenor</span>
-          </div>
+          <BrandLogo size="xs" />
           <p className="text-xs text-text-tertiary">AI DataOps Engineer</p>
         </div>
       </footer>

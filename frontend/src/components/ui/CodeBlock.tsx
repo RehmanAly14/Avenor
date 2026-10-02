@@ -55,18 +55,18 @@ export function CodeBlock({ code, language = "sql", className, title }: CodeBloc
   };
 
   return (
-    <div className={cn("overflow-hidden rounded-lg border border-border bg-[#0a0e14]", className)}>
-      <div className="flex items-center justify-between border-b border-border-subtle bg-surface px-3.5 py-2">
-        <span className="font-mono text-xs text-text-tertiary">{title ?? language.toUpperCase()}</span>
+    <div className={cn("overflow-hidden rounded-lg border border-border bg-[#0a0e14] shadow-elevated", className)}>
+      <div className="flex items-center justify-between border-b border-white/10 bg-[#10151d] px-3.5 py-2">
+        <span className="font-mono text-xs text-slate-400">{title ?? language.toUpperCase()}</span>
         <button
           onClick={handleCopy}
-          className="flex items-center gap-1.5 rounded px-2 py-1 text-xs text-text-secondary hover:bg-surface-elevated hover:text-text-primary transition-colors"
+          className="flex items-center gap-1.5 rounded px-2 py-1 text-xs text-slate-400 hover:bg-white/5 hover:text-slate-100 transition-colors"
         >
-          {copied ? <Check className="h-3.5 w-3.5 text-success" /> : <Copy className="h-3.5 w-3.5" />}
+          {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
           {copied ? "Copied" : "Copy"}
         </button>
       </div>
-      <pre className="overflow-x-auto p-4 text-[13px] leading-relaxed">
+      <pre className="overflow-x-auto p-4 text-[13px] leading-relaxed text-slate-200">
         <code className="font-mono">
           {tokens.map((t, i) => (
             <span key={i} className={t.className}>

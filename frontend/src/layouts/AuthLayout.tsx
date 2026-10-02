@@ -1,7 +1,6 @@
 import { type ReactNode } from "react";
-import { Link } from "react-router-dom";
-import { Boxes, GitPullRequest, ShieldCheck, Waypoints } from "lucide-react";
-import { ROUTES } from "../constants/routes";
+import { GitPullRequest, ShieldCheck, Waypoints } from "lucide-react";
+import { BrandLogo } from "../components/BrandLogo";
 
 interface AuthLayoutProps {
   title: string;
@@ -23,12 +22,7 @@ export default function AuthLayout({ title, subtitle, children, footer }: AuthLa
           }}
         />
 
-        <Link to={ROUTES.landing} className="relative z-10 flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-accent text-on-accent">
-            <Boxes className="h-4.5 w-4.5" />
-          </div>
-          <span className="text-[15px] font-semibold tracking-tight text-text-primary">Avenor</span>
-        </Link>
+        <BrandLogo className="relative z-10" />
 
         <div className="relative z-10 space-y-8">
           <div className="space-y-3">
@@ -60,12 +54,7 @@ export default function AuthLayout({ title, subtitle, children, footer }: AuthLa
       <div className="flex flex-1 flex-col items-center justify-center px-6 py-12">
         <div className="w-full max-w-[380px]">
           <div className="mb-8 lg:hidden">
-            <Link to={ROUTES.landing} className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-accent text-on-accent">
-                <Boxes className="h-4.5 w-4.5" />
-              </div>
-              <span className="text-[15px] font-semibold tracking-tight text-text-primary">Avenor</span>
-            </Link>
+            <BrandLogo />
           </div>
 
           <h1 className="text-xl font-semibold text-text-primary">{title}</h1>

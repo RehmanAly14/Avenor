@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* ============================================================
-   Avenor design tokens — dark-first, technical, minimal.
+   Avenor design tokens — light-first, technical, minimal.
    One accent color, everything else is neutral + semantic state.
    Tailwind v4 CSS-first theming: this @theme block is the single
    source of truth (tailwind.config.js is intentionally not used —
@@ -9,39 +9,39 @@
    ============================================================ */
 @theme {
   /* ---- Surfaces ---- */
-  --color-background: #0a0e14;
-  --color-surface: #0e131b;
-  --color-surface-elevated: #141a24;
-  --color-surface-hover: #1a212c;
-  --color-overlay: rgba(5, 8, 12, 0.72);
+  --color-background: #faf9f7;
+  --color-surface: #ffffff;
+  --color-surface-elevated: #ffffff;
+  --color-surface-hover: #f2f1ee;
+  --color-overlay: rgba(20, 22, 27, 0.45);
 
   /* ---- Borders ---- */
-  --color-border: #232a35;
-  --color-border-strong: #313a47;
-  --color-border-subtle: #1a2029;
+  --color-border: #e6e4df;
+  --color-border-strong: #d3d0c9;
+  --color-border-subtle: #efede8;
 
   /* ---- Text ---- */
-  --color-text-primary: #e8ecf2;
-  --color-text-secondary: #9aa5b4;
-  --color-text-tertiary: #667085;
-  --color-text-disabled: #4a5262;
+  --color-text-primary: #15181e;
+  --color-text-secondary: #565f6d;
+  --color-text-tertiary: #8a92a0;
+  --color-text-disabled: #b7bcc4;
 
   /* ---- Brand accent (blue — not violet/purple) ---- */
-  --color-accent: #4c7fff;
-  --color-accent-hover: #6b93ff;
-  --color-accent-active: #3d68e0;
-  --color-accent-muted: #1a2a52;
+  --color-accent: #3558e8;
+  --color-accent-hover: #2c48c9;
+  --color-accent-active: #233ba3;
+  --color-accent-muted: #eaeefc;
   --color-on-accent: #ffffff;
 
   /* ---- Semantic state ---- */
-  --color-success: #22c55e;
-  --color-success-muted: #10331f;
-  --color-warning: #f59e0b;
-  --color-warning-muted: #3a2a0d;
-  --color-danger: #ef4444;
-  --color-danger-muted: #3a1414;
-  --color-info: #38bdf8;
-  --color-info-muted: #0e2b3a;
+  --color-success: #15803d;
+  --color-success-muted: #e7f6ec;
+  --color-warning: #b45309;
+  --color-warning-muted: #fdf3e2;
+  --color-danger: #dc2626;
+  --color-danger-muted: #fdeded;
+  --color-info: #0369a1;
+  --color-info-muted: #e9f5fc;
 
   /* ---- Typography ---- */
   --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
@@ -53,9 +53,9 @@
   --radius-lg: 0.75rem;
   --radius-xl: 1rem;
 
-  /* ---- Shadows ---- */
-  --shadow-elevated: 0 4px 16px -4px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-overlay: 0 16px 48px -8px rgba(0, 0, 0, 0.55);
+  /* ---- Shadows (soft, low-contrast — light surfaces on a light page) ---- */
+  --shadow-elevated: 0 1px 2px rgba(21, 24, 30, 0.04), 0 6px 16px -4px rgba(21, 24, 30, 0.08);
+  --shadow-overlay: 0 16px 40px -8px rgba(21, 24, 30, 0.18), 0 4px 12px rgba(21, 24, 30, 0.08);
 
   --animate-shimmer: shimmer-anim 1.8s ease-in-out infinite;
   --animate-fade-in: fade-in 0.15s ease-out;
@@ -71,7 +71,7 @@
 }
 
 html {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 body {
@@ -121,14 +121,14 @@ body {
 .skeleton {
   position: relative;
   overflow: hidden;
-  background: var(--color-surface-elevated);
+  background: var(--color-surface-hover);
 }
 .skeleton::after {
   content: "";
   position: absolute;
   inset: 0;
   transform: translateX(-100%);
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.85), transparent);
   animation: shimmer-anim 1.8s infinite;
 }
 @keyframes shimmer-anim {
@@ -140,21 +140,23 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* ---- SQL / diff syntax (Fix tab code viewer) ---- */
+/* ---- SQL / diff syntax (Fix tab code viewer) ----
+   The code panel itself stays intentionally dark (like GitHub/VS Code)
+   for contrast, even inside the light app shell — see CodeBlock.tsx. */
 .syntax-keyword { color: #7aa2ff; font-weight: 600; }
 .syntax-function { color: #c792ea; }
 .syntax-string { color: #6bcf8e; }
-.syntax-comment { color: var(--color-text-tertiary); font-style: italic; }
+.syntax-comment { color: #6b7385; font-style: italic; }
 .syntax-number { color: #f5a97f; }
 
 .diff-added {
-  background-color: rgba(34, 197, 94, 0.08);
-  border-left: 2px solid var(--color-success);
+  background-color: rgba(34, 197, 94, 0.12);
+  border-left: 2px solid #22c55e;
   display: block;
 }
 .diff-removed {
-  background-color: rgba(239, 68, 68, 0.08);
-  border-left: 2px solid var(--color-danger);
+  background-color: rgba(239, 68, 68, 0.12);
+  border-left: 2px solid #ef4444;
   text-decoration: line-through;
   display: block;
 }

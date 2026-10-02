@@ -62,7 +62,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(({ className, e
       ref={ref}
       className={cn(
         "w-full h-9 rounded-md border bg-surface-elevated px-3 text-sm text-text-primary transition-colors appearance-none",
-        "bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%2216%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%239aa5b4%22 stroke-width=%222%22><polyline points=%226 9 12 15 18 9%22></polyline></svg>')] bg-no-repeat bg-[right_0.5rem_center]",
+        "bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%2216%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%238a92a0%22 stroke-width=%222%22><polyline points=%226 9 12 15 18 9%22></polyline></svg>')] bg-no-repeat bg-[right_0.5rem_center]",
         "border-border focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent pr-9",
         error && "border-danger",
         className

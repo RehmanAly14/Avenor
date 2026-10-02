@@ -2,7 +2,7 @@
 // Every module under lib/api/ goes through this — single place that knows
 // about the base URL, auth header, response envelope, and 401 handling.
 
-const BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? "http://localhost:3000/api/v1";
+const BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? "http://localhost:3001/api/v1";
 
 export const TOKEN_STORAGE_KEY = "avenor_token";
 
@@ -21,19 +21,28 @@ interface ApiEnvelope<T> {
   data: T;
   meta?: PaginationMeta;
   errors?: unknown;
+  code?: string;
 }
 
 export class ApiError extends Error {
   status: number;
   errors?: unknown;
+  code?: string;
 
-  constructor(message: string, status: number, errors?: unknown) {
+  constructor(message: string, status: number, errors?: unknown, code?: string) {
     super(message);
     this.name = "ApiError";
     this.status = status;
     this.errors = errors;
+    this.code = code;
   }
 }
+
+/**
+ * 401 codes that mean "this specific resource's auth expired", not "your
+ * Avenor session expired" — the global sign-out must not fire for these.
+ */
+const SCOPED_UNAUTHORIZED_CODES = new Set(["GITHUB_REAUTH_REQUIRED"]);
 
 type UnauthorizedHandler = () => void;
 let unauthorizedHandler: UnauthorizedHandler | null = null;
@@ -119,8 +128,8 @@ async function requestEnvelope<T>(path: string, options: RequestOptions = {}): P
   }
 
   if (!res.ok) {
-    if (res.status === 401) unauthorizedHandler?.();
-    throw new ApiError(json?.message || `Request failed (${res.status})`, res.status, json?.errors);
+    if (res.status === 401 && !SCOPED_UNAUTHORIZED_CODES.has(json?.code ?? "")) unauthorizedHandler?.();
+    throw new ApiError(json?.message || `Request failed (${res.status})`, res.status, json?.errors, json?.code);
   }
 
   if (!json) throw new ApiError("Received an empty response from the server.", res.status);

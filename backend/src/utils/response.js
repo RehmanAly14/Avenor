@@ -42,8 +42,9 @@ export function sendSuccess(res, { statusCode = HTTP_STATUS.OK, message = "", da
  * @param {number}   [options.statusCode=500]
  * @param {string}   [options.message='']
  * @param {Array}    [options.errors]         - field-level validation errors
+ * @param {string}   [options.code]           - machine-readable error code (see AppError)
  */
-export function sendError(res, { statusCode = HTTP_STATUS.INTERNAL_SERVER_ERROR, message = "", errors } = {}) {
+export function sendError(res, { statusCode = HTTP_STATUS.INTERNAL_SERVER_ERROR, message = "", errors, code } = {}) {
   const payload = {
     success: false,
     message,
@@ -51,6 +52,10 @@ export function sendError(res, { statusCode = HTTP_STATUS.INTERNAL_SERVER_ERROR,
 
   if (errors !== undefined) {
     payload.errors = errors;
+  }
+
+  if (code !== undefined) {
+    payload.code = code;
   }
 
   return res.status(statusCode).json(payload);

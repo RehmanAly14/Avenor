@@ -124,7 +124,7 @@ export type LineageRelationshipType = "UPSTREAM" | "DOWNSTREAM" | "DERIVED_FROM"
 export interface LineageGraphNode {
   id: string;
   position: { x: number; y: number };
-  data: { label: string; depth: number };
+  data: { label: string; depth: number; assetType?: string; qualifiedName?: string | null };
 }
 
 export interface LineageGraphEdge {

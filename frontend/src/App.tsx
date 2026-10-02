@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import AppLayout from "./layouts/AppLayout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { GuestRoute } from "./components/GuestRoute";
 import { ROUTES } from "./constants/routes";
 
 import LandingPage from "./pages/LandingPage";
@@ -12,7 +13,9 @@ import NewInvestigationPage from "./pages/NewInvestigationPage";
 import InvestigationDetailPage from "./pages/InvestigationDetailPage";
 import MetadataPage from "./pages/MetadataPage";
 import MetadataAssetDetailPage from "./pages/MetadataAssetDetailPage";
+import LineagePage from "./pages/LineagePage";
 import DataSourcesPage from "./pages/DataSourcesPage";
+import DocumentsPage from "./pages/DocumentsPage";
 import ProjectsPage from "./pages/ProjectsPage";
 import WorkspacesPage from "./pages/WorkspacesPage";
 import GitHubPage from "./pages/GitHubPage";
@@ -23,8 +26,22 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path={ROUTES.landing} element={<LandingPage />} />
-        <Route path={ROUTES.login} element={<LoginPage />} />
-        <Route path={ROUTES.register} element={<RegisterPage />} />
+        <Route
+          path={ROUTES.login}
+          element={
+            <GuestRoute>
+              <LoginPage />
+            </GuestRoute>
+          }
+        />
+        <Route
+          path={ROUTES.register}
+          element={
+            <GuestRoute>
+              <RegisterPage />
+            </GuestRoute>
+          }
+        />
 
         <Route
           element={
@@ -39,7 +56,9 @@ function App() {
           <Route path="/investigations/:id" element={<InvestigationDetailPage />} />
           <Route path={ROUTES.metadata} element={<MetadataPage />} />
           <Route path="/metadata/:id" element={<MetadataAssetDetailPage />} />
+          <Route path={ROUTES.lineage} element={<LineagePage />} />
           <Route path={ROUTES.dataSources} element={<DataSourcesPage />} />
+          <Route path={ROUTES.documents} element={<DocumentsPage />} />
           <Route path={ROUTES.projects} element={<ProjectsPage />} />
           <Route path={ROUTES.workspaces} element={<WorkspacesPage />} />
           <Route path={ROUTES.github} element={<GitHubPage />} />

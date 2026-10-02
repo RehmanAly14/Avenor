@@ -1,6 +1,6 @@
-import { useParams, Link, useSearchParams } from "react-router-dom";
+import { useParams, Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Database, User, Tag as TagIcon } from "lucide-react";
+import { ArrowLeft, Database, Network, User, Tag as TagIcon } from "lucide-react";
 import { Badge } from "../components/ui/Badge";
 import { Card, CardContent } from "../components/ui/Card";
 import { Skeleton } from "../components/ui/Skeleton";
@@ -17,6 +17,7 @@ type TabKey = (typeof TABS)[number];
 
 export default function MetadataAssetDetailPage() {
   const { id = "" } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = (TABS.includes(searchParams.get("tab") as TabKey) ? searchParams.get("tab") : "overview") as TabKey;
   const setActiveTab = (tab: string) => setSearchParams((prev) => ({ ...Object.fromEntries(prev), tab }), { replace: true });
@@ -54,9 +55,11 @@ export default function MetadataAssetDetailPage() {
         <ArrowLeft className="h-3.5 w-3.5" /> Metadata
       </Link>
 
-      <div className="flex items-center gap-2.5">
+      <div className="flex flex-wrap items-center gap-2.5">
         <Database className="h-5 w-5 text-text-tertiary" />
         <h1 className="font-mono text-xl font-semibold text-text-primary">{asset.name}</h1>
+        <Badge tone="neutral">{asset.assetType}</Badge>
+        {asset.dataSource && <Badge tone="accent">{asset.dataSource.name}</Badge>}
       </div>
       {asset.qualifiedName && <p className="mt-1 font-mono text-xs text-text-tertiary">{asset.qualifiedName}</p>}
 
@@ -188,8 +191,13 @@ export default function MetadataAssetDetailPage() {
             <EmptyState icon={<Database className="h-5 w-5" />} title="No lineage recorded" description="Connect this asset to others to see upstream and downstream dependencies." />
           ) : (
             <Card>
+              <div className="flex items-center justify-end border-b border-border-subtle px-4 py-2.5">
+                <button onClick={() => navigate(ROUTES.lineage)} className="flex items-center gap-1.5 text-xs font-medium text-accent hover:underline">
+                  <Network className="h-3.5 w-3.5" /> Open in Lineage
+                </button>
+              </div>
               <CardContent className="p-2">
-                <LineageGraph nodes={lineageQuery.data.nodes} edges={lineageQuery.data.edges} rootCauseNodeId={id} />
+                <LineageGraph nodes={lineageQuery.data.nodes} edges={lineageQuery.data.edges} focusNodeId={id} autoLayout minimap height={440} />
               </CardContent>
             </Card>
           )}

@@ -24,6 +24,8 @@ export default function GitHubPage() {
   const accountQuery = useQuery({ queryKey: ["github", "account"], queryFn: githubApi.getAccount, enabled: connected });
   const reposQuery = useQuery({ queryKey: ["github", "repositories"], queryFn: githubApi.listRepositories, enabled: connected });
 
+  const needsReconnect = [accountQuery.error, reposQuery.error].some((err) => err instanceof ApiError && err.code === "GITHUB_REAUTH_REQUIRED");
+
   useEffect(() => {
     const onVisible = () => {
       if (document.visibilityState === "visible") queryClient.invalidateQueries({ queryKey: ["github"] });
@@ -104,6 +106,25 @@ export default function GitHubPage() {
         </Card>
       )}
 
+      {connected && needsReconnect && (
+        <Card className="border-warning/40 bg-warning/5">
+          <CardContent className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-md bg-surface-elevated text-warning">
+                <AlertTriangle className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-text-primary">GitHub access expired</p>
+                <p className="text-xs text-text-tertiary">Your GitHub authorization was revoked or expired. Reconnect to keep pull request automation working.</p>
+              </div>
+            </div>
+            <Button onClick={() => connectMutation.mutate()} loading={connectMutation.isPending}>
+              <Link2 className="h-4 w-4" /> Reconnect GitHub
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {connected && (
         <div>
           <div className="mb-3 flex items-center justify-between">
@@ -117,7 +138,7 @@ export default function GitHubPage() {
                 <Skeleton key={i} className="h-16 w-full" />
               ))}
             </div>
-          ) : reposQuery.isError ? (
+          ) : needsReconnect ? null : reposQuery.isError ? (
             <ErrorState description="We couldn't load your repositories." onRetry={() => reposQuery.refetch()} />
           ) : !reposQuery.data || reposQuery.data.length === 0 ? (
             <EmptyState icon={<GitBranch className="h-5 w-5" />} title="No repositories found" description="Grant Avenor access to at least one repository on GitHub." />

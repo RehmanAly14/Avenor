@@ -43,7 +43,10 @@ function mapGithubError(err) {
   const message = GITHUB_ERROR_MESSAGES[err.status] ?? (err.status >= 500 ? "GitHub is temporarily unavailable. Try again shortly." : "GitHub request failed.");
   const statusCode =
     { 401: HTTP_STATUS.UNAUTHORIZED, 403: HTTP_STATUS.FORBIDDEN, 404: HTTP_STATUS.NOT_FOUND, 409: HTTP_STATUS.CONFLICT, 429: HTTP_STATUS.TOO_MANY_REQUESTS }[err.status] ?? HTTP_STATUS.BAD_GATEWAY;
-  return new AppError(message, statusCode);
+  // A revoked/expired GitHub token also carries HTTP 401, same as an expired Avenor
+  // session — tag it distinctly so the frontend doesn't treat it as a sign-out.
+  const code = err.status === 401 ? "GITHUB_REAUTH_REQUIRED" : undefined;
+  return new AppError(message, statusCode, undefined, code);
 }
 
 function normalizeRepo(raw) {
